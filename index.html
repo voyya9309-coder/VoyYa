@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0E7C66">
+<title>VoyYa · Delivery en Sancti Spíritus</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>tailwind.config={theme:{extend:{colors:{v:'#0E7C66',s:'#FFC21A',ink:'#10231F'}}}}</script>
+<style>
+ /* Fuentes del sistema: cero descargas en conexiones lentas */
+ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#F3F7F5;color:#10231F}
+ button:focus-visible,input:focus-visible{outline:3px solid #FFC21A;outline-offset:2px}
+</style>
+</head>
+<body>
+<header class="sticky top-0 z-20 bg-v text-white">
+  <div class="max-w-xl mx-auto px-4 pt-3 flex items-center justify-between">
+    <h1 class="text-2xl font-black tracking-tight">Voy<span class="text-s">Ya</span></h1>
+    <!-- Acceso discreto al panel de administrador -->
+    <button onclick="admin()" class="p-2 opacity-40" aria-label="Administración"><i data-lucide="lock" class="w-4 h-4"></i></button>
+  </div>
+  <nav id="nav" class="max-w-xl mx-auto px-2 flex text-sm font-semibold"></nav>
+</header>
+<main id="app" class="max-w-xl mx-auto p-4 pb-28"></main>
+<div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-ink text-white text-sm rounded-full px-4 py-2 hidden z-50"></div>
+
+<script>
+/* ============ CONFIGURACIÓN: pega aquí tus credenciales de Supabase ============ */
+const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
+const SUPABASE_ANON_KEY = 'TU_ANON_KEY';
+const ADMIN_PASS = '93091414047';
+/* ================================================================================ */
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const app = document.getElementById('app');
+const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cup = n => Number(n).toLocaleString('es') + ' CUP';
+const fd = f => Object.fromEntries(new FormData(f));
+const L = {pendiente:'Recibido',preparando:'En preparación',listo:'Listo, buscando repartidor',en_camino:'En camino',entregado:'Entregado',rechazado:'Rechazado'};
+const BTN = 'bg-v text-white rounded-xl px-4 py-2.5 font-semibold active:scale-95 disabled:opacity-50';
+const BTN2 = 'bg-s text-ink rounded-xl px-4 py-2.5 font-bold active:scale-95';
+const INP = 'w-full border border-slate-300 rounded-xl px-3 py-2.5 bg-white';
+const CARD = 'bg-white rounded-2xl p-4 shadow-sm border border-slate-200';
+
+let tab = 'cliente', chans = [], NEGS = [], neg = null, prods = [], cart = {nid:null, items:{}};
+let watchId = null, gpsTimer = null, lastPos = null, locRep = null;
+
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),2600); }
+function icons(){ lucide.createIcons(); }
+function fail(er){ app.innerHTML = `<div class="${CARD} text-red-700">No se pudo conectar: ${e(er.message||er)}.<br>Revisa tu conexión y las credenciales de Supabase.</div>`; }
+function unsub(){ chans.forEach(c=>sb.removeChannel(c)); chans=[]; locRep=null; }
+function listen(name, table, filter, fn){
+  const cfg = {event:'*', schema:'public', table}; if(filter) cfg.filter = filter;
+  chans.push(sb.channel(name).on('postgres_changes', cfg, fn).subscribe());
+}
+
+/* ---------- Navegación por roles ---------- */
+function go(t){ tab=t; unsub(); neg=null; render(); }
+function render(){
+  const tabs = tab==='admin' ? [['admin','Administración']] : [['cliente','Pedir'],['negocio','Mi negocio'],['repartidor','Reparto']];
+  document.getElementById('nav').innerHTML = tabs.map(([k,n]) =>
+    `<button onclick="go('${k}')" class="flex-1 py-3 border-b-4 ${tab===k?'border-s':'border-transparent opacity-70'}">${n}</button>`).join('');
+  ({cliente:vCliente, negocio:vNegocio, repartidor:vRepartidor, admin:vAdmin})[tab]();
+  icons();
+}
+
+/* =================== CLIENTE =================== */
+async function vCliente(){
+  const ped = localStorage.voyya_ped;
+  if(ped) return track(ped);
+  const {data, error} = await sb.from('negocios').select('*').eq('activo',true).order('nombre');
+  if(error) return fail(error);
+  NEGS = data;
+  app.innerHTML = `<h2 class="text-xl font-bold mb-3">¿Qué te llevamos hoy?</h2>` + (data.length
+    ? data.map(n=>`<button onclick="openNeg('${n.id}')" class="${CARD} w-full flex items-center gap-4 mb-3 text-left active:scale-[.98]">
+        <span class="text-4xl">${e(n.emoji)}</span><span><b class="block text-lg">${e(n.nombre)}</b><span class="text-slate-500 text-sm">${e(n.categoria)}</span></span></button>`).join('')
+    : `<p class="text-slate-500">Aún no hay negocios abiertos. Vuelve pronto.</p>`);
+}
+async function openNeg(id){
+  neg = NEGS.find(n=>n.id==id);
+  if(cart.nid!=id) cart = {nid:id, items:{}};
+  const {data, error} = await sb.from('productos').select('*').eq('negocio_id',id).eq('disponible',true).order('nombre');
+  if(error) return fail(error);
+  prods = data; drawNeg();
+}
+const cartTotal = () => Object.values(cart.items).reduce((s,i)=>s+i.q*i.p.precio,0);
+const cartCount = () => Object.values(cart.items).reduce((s,i)=>s+i.q,0);
+function chg(pid,d){
+  const p = prods.find(x=>x.id==pid), it = cart.items[pid] || {p,q:0};
+  it.q = Math.max(0, it.q+d); it.q ? cart.items[pid]=it : delete cart.items[pid]; drawNeg();
+}
+function drawNeg(){
+  app.innerHTML = `<button onclick="render()" class="text-v font-semibold mb-3">← Negocios</button>
+  <h2 class="text-xl font-bold mb-3">${e(neg.emoji)} ${e(neg.nombre)}</h2>` +
+  (prods.length ? prods.map(p=>{ const q=cart.items[p.id]?.q||0; return `<div class="${CARD} mb-2 flex items-center justify-between">
+    <div><b>${e(p.nombre)}</b><div class="text-slate-500 text-sm">${cup(p.precio)}</div></div>
+    <div class="flex items-center gap-3">${q?`<button onclick="chg('${p.id}',-1)" class="w-9 h-9 rounded-full bg-slate-200 font-bold">−</button><b>${q}</b>`:''}
+    <button onclick="chg('${p.id}',1)" class="w-9 h-9 rounded-full bg-v text-white font-bold">+</button></div></div>`; }).join('')
+   : `<p class="text-slate-500">Este negocio no tiene productos disponibles ahora.</p>`) +
+  (cartCount() ? `<div class="fixed bottom-0 inset-x-0 p-3 bg-white border-t"><div class="max-w-xl mx-auto"><button onclick="drawCheckout()" class="${BTN} w-full">Pedir ${cartCount()} · ${cup(cartTotal())}</button></div></div>` : '');
+}
+function drawCheckout(){
+  const c = JSON.parse(localStorage.voyya_cli||'{}');
+  app.innerHTML = `<button onclick="drawNeg()" class="text-v font-semibold mb-3">← Volver</button>
+  <h2 class="text-xl font-bold mb-3">Tu pedido</h2>
+  <div class="${CARD} mb-3">${Object.values(cart.items).map(i=>`<div class="flex justify-between"><span>${i.q} × ${e(i.p.nombre)}</span><span>${cup(i.q*i.p.precio)}</span></div>`).join('')}
+  <div class="flex justify-between font-bold border-t mt-2 pt-2"><span>Total</span><span>${cup(cartTotal())}</span></div></div>
+  <form onsubmit="sendOrder(event)" class="space-y-3">
+    <input name="nombre" required placeholder="Tu nombre" value="${e(c.nombre)}" class="${INP}">
+    <input name="tel" required type="tel" placeholder="Teléfono" value="${e(c.tel)}" class="${INP}">
+    <input name="dir" required placeholder="Dirección exacta y referencias" value="${e(c.dir)}" class="${INP}">
+    <button class="${BTN} w-full">Confirmar pedido</button></form>`;
+}
+async function sendOrder(ev){
+  ev.preventDefault(); const f = fd(ev.target); const b = ev.target.querySelector('button'); b.disabled = true;
+  localStorage.voyya_cli = JSON.stringify(f);
+  const items = Object.values(cart.items).map(i=>({n:i.p.nombre, q:i.q, p:i.p.precio}));
+  const {data, error} = await sb.from('pedidos').insert({negocio_id:neg.id, cliente_nombre:f.nombre, cliente_tel:f.tel, direccion:f.dir, items, total:cartTotal(), estado:'pendiente'}).select().single();
+  if(error){ b.disabled=false; return toast('No se envió. Intenta de nuevo.'); }
+  localStorage.voyya_ped = data.id; cart = {nid:null, items:{}}; render();
+}
+/* Seguimiento en tiempo real del pedido */
+async function track(id){
+  unsub();
+  const load = async () => {
+    const {data:p, error} = await sb.from('pedidos').select('*, negocios(nombre)').eq('id',id).single();
+    if(error || !p){ localStorage.removeItem('voyya_ped'); return render(); }
+    const steps = [['pendiente','Recibido'],['preparando','En preparación'],['en_camino','En camino'],['entregado','Entregado']];
+    const idx = Math.max(0, steps.findIndex(s=>s[0]===(p.estado==='listo'?'preparando':p.estado)));
+    let loc = '';
+    if(p.estado==='en_camino' && p.repartidor_id){
+      if(locRep!==p.repartidor_id){ locRep=p.repartidor_id; listen('loc'+id,'ubicaciones_repartidores',`repartidor_id=eq.${p.repartidor_id}`,load); }
+      const {data:u} = await sb.from('ubicaciones_repartidores').select('*').eq('repartidor_id',p.repartidor_id).maybeSingle();
+      if(u) loc = `<a target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${u.lat}&mlon=${u.lng}#map=17/${u.lat}/${u.lng}" class="${BTN2} inline-block mt-3">Ver al repartidor en el mapa</a>`;
+    }
+    const done = ['entregado','rechazado'].includes(p.estado);
+    app.innerHTML = `<h2 class="text-xl font-bold mb-1">Tu pedido en ${e(p.negocios?.nombre)}</h2>
+    <p class="text-slate-500 mb-4">${cup(p.total)} · ${e(p.direccion)}</p><div class="${CARD}">` +
+    (p.estado==='rechazado' ? `<b class="text-red-700">El negocio no pudo aceptar tu pedido.</b>` :
+     steps.map((s,i)=>`<div class="flex items-center gap-3 py-2"><span class="w-6 h-6 rounded-full flex items-center justify-center text-xs ${i<=idx?'bg-v text-white':'bg-slate-200'}">${i<idx||p.estado==='entregado'?'✓':''}</span><span class="${i===idx?'font-bold':'text-slate-500'}">${s[1]}</span></div>`).join('')) +
+    (p.estado==='listo' ? `<p class="text-sm text-slate-500 mt-2">Tu pedido está listo; esperamos repartidor.</p>`:'') + loc + `</div>` +
+    (done ? `<button onclick="localStorage.removeItem('voyya_ped');render()" class="${BTN} w-full mt-4">Hacer otro pedido</button>` : '');
+    icons();
+  };
+  listen('ped'+id,'pedidos',`id=eq.${id}`,load);
+  load();
+}
+
+/* =================== NEGOCIO =================== */
+let nSub = 'pedidos';
+async function vNegocio(){
+  const id = localStorage.voyya_neg;
+  if(!id) return pinForm('Entrar a mi negocio', async pin=>{
+    const {data} = await sb.from('negocios').select('id').eq('pin',pin).maybeSingle();
+    if(!data) return toast('PIN incorrecto'); localStorage.voyya_neg = data.id; render();
+  });
+  const {data:n} = await sb.from('negocios').select('*').eq('id',id).maybeSingle();
+  if(!n){ localStorage.removeItem('voyya_neg'); return render(); }
+  const head = `<div class="flex justify-between items-center mb-3"><h2 class="text-xl font-bold">${e(n.emoji)} ${e(n.nombre)}</h2>
+    <button onclick="localStorage.removeItem('voyya_neg');go('negocio')" class="text-sm text-slate-500 underline">Salir</button></div>
+    <div class="flex gap-2 mb-4">${['pedidos','menu'].map(k=>`<button onclick="nSub='${k}';render()" class="flex-1 py-2 rounded-xl font-semibold ${nSub===k?'bg-ink text-white':'bg-white border'}">${k==='menu'?'Menú':'Pedidos'}</button>`).join('')}</div>`;
+  if(nSub==='menu') return menuNeg(id, head);
+  const load = async () => {
+    const {data} = await sb.from('pedidos').select('*').eq('negocio_id',id).order('creado',{ascending:false}).limit(30);
+    app.innerHTML = head + (data?.length ? data.map(p=>`<div class="${CARD} mb-3">
+      <div class="flex justify-between"><b>${e(p.cliente_nombre)}</b><span class="text-sm px-2 rounded-full bg-s/40">${L[p.estado]}</span></div>
+      <div class="text-sm text-slate-600 my-2">${p.items.map(i=>`${i.q} × ${e(i.n)}`).join('<br>')}</div>
+      <div class="font-bold mb-2">${cup(p.total)}</div>
+      ${p.estado==='pendiente' ? `<div class="flex gap-2"><button onclick="setEst('${p.id}','preparando')" class="${BTN} flex-1">Aceptar</button><button onclick="setEst('${p.id}','rechazado')" class="flex-1 rounded-xl border border-red-300 text-red-700 font-semibold">Rechazar</button></div>` : ''}
+      ${p.estado==='preparando' ? `<button onclick="setEst('${p.id}','listo')" class="${BTN2} w-full">Marcar listo para recoger</button>` : ''}
+    </div>`).join('') : `<p class="text-slate-500">Todavía no hay pedidos. Se mostrarán aquí al instante.</p>`);
+    icons();
+  };
+  unsub(); listen('negped','pedidos',`negocio_id=eq.${id}`,load); load();
+}
+async function setEst(id,est){ const {error}=await sb.from('pedidos').update({estado:est}).eq('id',id); if(error) toast('No se pudo actualizar'); }
+async function menuNeg(id, head){
+  const {data} = await sb.from('productos').select('*').eq('negocio_id',id).order('nombre');
+  app.innerHTML = head + `<form onsubmit="addProd(event,'${id}')" class="${CARD} mb-4 flex gap-2">
+    <input name="nombre" required placeholder="Producto" class="${INP}"><input name="precio" required type="number" min="0" placeholder="CUP" class="${INP} !w-24">
+    <button class="${BTN}">+</button></form>` +
+    (data||[]).map(p=>`<div class="${CARD} mb-2 flex items-center justify-between ${p.disponible?'':'opacity-60'}">
+      <div><b>${e(p.nombre)}</b><div class="text-sm text-slate-500">${cup(p.precio)}</div></div>
+      <div class="flex gap-2"><button onclick="togProd('${p.id}',${!p.disponible})" class="px-3 py-1.5 rounded-lg border text-sm">${p.disponible?'Agotar':'Activar'}</button>
+      <button onclick="delProd('${p.id}')" class="px-3 py-1.5 rounded-lg border border-red-300 text-red-700 text-sm">Borrar</button></div></div>`).join('');
+  unsub(); listen('prods','productos',`negocio_id=eq.${id}`,()=>menuNeg(id,head));
+}
+async function addProd(ev,id){ ev.preventDefault(); const f=fd(ev.target); await sb.from('productos').insert({negocio_id:id,nombre:f.nombre,precio:+f.precio}); }
+async function togProd(id,v){ await sb.from('productos').update({disponible:v}).eq('id',id); }
+async function delProd(id){ if(confirm('¿Borrar este producto?')) await sb.from('productos').delete().eq('id',id); }
+
+/* =================== REPARTIDOR =================== */
+async function vRepartidor(){
+  const me = localStorage.voyya_rep;
+  if(!me) return pinForm('Entrar como repartidor', async pin=>{
+    const {data} = await sb.from('repartidores').select('id').eq('pin',pin).eq('activo',true).maybeSingle();
+    if(!data) return toast('PIN incorrecto'); localStorage.voyya_rep = data.id; render();
+  });
+  const load = async () => {
+    const {data:act} = await sb.from('pedidos').select('*, negocios(nombre)').eq('repartidor_id',me).eq('estado','en_camino').maybeSingle();
+    let html = `<div class="flex justify-between mb-3"><h2 class="text-xl font-bold">Reparto</h2><button onclick="stopGPS();localStorage.removeItem('voyya_rep');go('repartidor')" class="text-sm text-slate-500 underline">Salir</button></div>`;
+    if(act){
+      startGPS(me, act.id);
+      html += `<div class="${CARD}"><b>Entrega en curso</b><p class="text-sm text-slate-500 mb-2">GPS activo: tu ubicación se comparte cada 5 s.</p>
+        <p><b>Recoge:</b> ${e(act.negocios?.nombre)}</p><p><b>Entrega a:</b> ${e(act.cliente_nombre)} · ${e(act.cliente_tel)}</p><p><b>Dirección:</b> ${e(act.direccion)}</p>
+        <p class="font-bold my-2">Cobrar ${cup(act.total)}</p><button onclick="entregar('${act.id}','${me}')" class="${BTN} w-full">Marcar entregado</button></div>`;
+    } else {
+      stopGPS();
+      const {data} = await sb.from('pedidos').select('*, negocios(nombre)').eq('estado','listo').is('repartidor_id',null).order('creado');
+      html += `<h3 class="font-semibold mb-2">Listos para recoger</h3>` + (data?.length ? data.map(p=>`<div class="${CARD} mb-3">
+        <b>${e(p.negocios?.nombre)}</b> → ${e(p.direccion)}<div class="text-sm text-slate-500 mb-2">${cup(p.total)}</div>
+        <button onclick="tomar('${p.id}','${me}')" class="${BTN2} w-full">Tomar pedido</button></div>`).join('') : `<p class="text-slate-500">No hay pedidos listos ahora. Se actualiza solo.</p>`);
+    }
+    app.innerHTML = html; icons();
+  };
+  unsub(); listen('rep','pedidos',null,load); load();
+}
+async function tomar(id,me){
+  const {data} = await sb.from('pedidos').update({repartidor_id:me,estado:'en_camino'}).eq('id',id).eq('estado','listo').is('repartidor_id',null).select();
+  if(!data?.length) toast('Otro repartidor ya lo tomó'); 
+}
+async function entregar(id,me){
+  await sb.from('pedidos').update({estado:'entregado'}).eq('id',id);
+  stopGPS(); await sb.from('ubicaciones_repartidores').delete().eq('repartidor_id',me);
+}
+/* Geolocalización: watchPosition guarda la última posición y un temporizador la sube cada 5 s */
+function startGPS(me, pedidoId){
+  if(watchId!==null) return;
+  if(!navigator.geolocation) return toast('Este teléfono no tiene GPS');
+  watchId = navigator.geolocation.watchPosition(p=>{ lastPos = p.coords; },
+    ()=>toast('Activa el permiso de ubicación'), {enableHighAccuracy:true, maximumAge:5000});
+  gpsTimer = setInterval(()=>{ if(lastPos) sb.from('ubicaciones_repartidores').upsert(
+    {repartidor_id:me, pedido_id:pedidoId, lat:lastPos.latitude, lng:lastPos.longitude, actualizado:new Date().toISOString()}); }, 5000);
+}
+function stopGPS(){
+  if(watchId!==null) navigator.geolocation.clearWatch(watchId);
+  clearInterval(gpsTimer); watchId=null; gpsTimer=null; lastPos=null;
+}
+
+/* =================== ADMINISTRADOR =================== */
+function admin(){
+  const p = prompt('Contraseña de administrador');
+  if(p===null) return;
+  if(p!==ADMIN_PASS) return toast('Contraseña incorrecta');
+  tab='admin'; unsub(); render();
+}
+async function vAdmin(){
+  const [ped, ne, re, ub] = await Promise.all([
+    sb.from('pedidos').select('estado,total'), sb.from('negocios').select('*').order('nombre'),
+    sb.from('repartidores').select('*').order('nombre'),
+    sb.from('ubicaciones_repartidores').select('repartidor_id').gte('actualizado', new Date(Date.now()-120000).toISOString())]);
+  const P = ped.data||[], ent = P.filter(p=>p.estado==='entregado');
+  const stat = (n,t)=>`<div class="${CARD} text-center"><div class="text-2xl font-black text-v">${n}</div><div class="text-xs text-slate-500">${t}</div></div>`;
+  const row = (t,id,o,n)=>`<div class="${CARD} mb-2 flex justify-between items-center ${o.activo?'':'opacity-60'}"><span>${e(o.emoji||'🛵')} ${e(o.nombre)} <span class="text-slate-400 text-sm">PIN ${e(o.pin)}</span></span>
+    <button onclick="togAct('${t}','${id}',${!o.activo})" class="px-3 py-1.5 rounded-lg border text-sm">${o.activo?'Desactivar':'Activar'}</button></div>`;
+  app.innerHTML = `<div class="flex justify-between mb-3"><h2 class="text-xl font-bold">Panel general</h2><button onclick="go('cliente')" class="text-sm underline text-slate-500">Cerrar sesión</button></div>
+  <div class="grid grid-cols-2 gap-3 mb-5">${stat(P.length,'Pedidos totales')}${stat(cup(ent.reduce((s,p)=>s+Number(p.total),0)),'Ingresos (entregados)')}
+  ${stat(new Set((ub.data||[]).map(u=>u.repartidor_id)).size,'Repartidores activos ahora')}${stat((ne.data||[]).filter(n=>n.activo).length,'Negocios abiertos')}</div>
+  <h3 class="font-semibold mb-2">Negocios</h3>${(ne.data||[]).map(n=>row('negocios',n.id,n)).join('')}
+  <form onsubmit="addNeg(event)" class="${CARD} mb-5 grid grid-cols-2 gap-2"><input name="nombre" required placeholder="Nombre" class="${INP}"><input name="categoria" placeholder="Categoría" class="${INP}">
+  <input name="emoji" placeholder="Emoji 🍕" class="${INP}"><input name="pin" required placeholder="PIN del dueño" class="${INP}"><button class="${BTN} col-span-2">Añadir negocio</button></form>
+  <h3 class="font-semibold mb-2">Repartidores</h3>${(re.data||[]).map(r=>row('repartidores',r.id,r)).join('')}
+  <form onsubmit="addRep(event)" class="${CARD} grid grid-cols-2 gap-2"><input name="nombre" required placeholder="Nombre" class="${INP}"><input name="telefono" placeholder="Teléfono" class="${INP}">
+  <input name="pin" required placeholder="PIN" class="${INP} col-span-2"><button class="${BTN} col-span-2">Añadir repartidor</button></form>`;
+}
+async function togAct(t,id,v){ await sb.from(t).update({activo:v}).eq('id',id); vAdmin(); }
+async function addNeg(ev){ ev.preventDefault(); const f=fd(ev.target); await sb.from('negocios').insert({...f, emoji:f.emoji||'🏪'}); vAdmin(); }
+async function addRep(ev){ ev.preventDefault(); await sb.from('repartidores').insert(fd(ev.target)); vAdmin(); }
+
+/* ---------- Formulario de PIN reutilizable ---------- */
+function pinForm(titulo, fn){
+  app.innerHTML = `<form class="${CARD} space-y-3"><h2 class="font-bold text-lg">${titulo}</h2>
+    <input name="pin" required inputmode="numeric" placeholder="Tu PIN" class="${INP}"><button class="${BTN} w-full">Entrar</button>
+    <p class="text-sm text-slate-500">El PIN te lo da el administrador de VoyYa.</p></form>`;
+  app.querySelector('form').onsubmit = ev => { ev.preventDefault(); fn(fd(ev.target).pin.trim()); };
+}
+
+render();
+</script>
+</body>
+</html>
