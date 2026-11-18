@@ -12,11 +12,19 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
 <script>tailwind.config={theme:{extend:{colors:{v:'var(--v)',s:'var(--s)',ink:'var(--ink)'}}}}</script>
 <style>
- :root{--v:#0E7C66;--s:#FFC21A;--ink:#10231F;--bg:#F3F7F5}
- body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
- #splash{transition:opacity .4s}
- button:focus-visible,input:focus-visible{outline:3px solid var(--s);outline-offset:2px}
-</style>
+ :root{--v:#087f68;--s:#ffc928;--ink:#10231f;--bg:#f2f7f5}
+ *{box-sizing:border-box}
+ body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent}
+ #splash{transition:opacity .4s} header{box-shadow:0 8px 24px #062f251c} #app{min-height:65vh}
+ .bg-v{background:var(--v)!important}.text-v{color:var(--v)!important}.bg-s{background:var(--s)!important}
+ .rounded-2xl{border-radius:1.25rem}.shadow-sm{box-shadow:0 5px 18px #12352b0b}.border-slate-200{border-color:#e4ece8}
+ button{transition:transform .15s ease,filter .15s ease,box-shadow .15s ease}button:active{transform:scale(.98)}
+ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--s);outline-offset:2px}
+ input,textarea,select{max-width:100%}
+ .hero-voyya{background:radial-gradient(circle at 90% 5%,#ffffff3d,transparent 34%),linear-gradient(135deg,var(--v),#075b4d);color:white;border-radius:1.5rem;padding:1.35rem;box-shadow:0 12px 30px #087f6826}
+ .product-photo{background:linear-gradient(135deg,#edf5f1,#fff)}.safe-area-bottom{padding-bottom:env(safe-area-inset-bottom)}
+ @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+ </style>
 </head>
 <body>
 <!-- Pantalla de carga: sube tu imagen al repositorio con el nombre splash.png -->
@@ -28,7 +36,7 @@
 
 <header class="sticky top-0 z-20 bg-v text-white">
   <div class="max-w-xl mx-auto px-4 pt-3 flex items-center justify-between">
-    <h1 class="text-2xl font-black tracking-tight">Voy<span class="text-s">Ya</span></h1>
+    <h1 class="text-2xl font-black tracking-tight flex items-center gap-2"><span class="inline-flex w-9 h-9 rounded-xl bg-white/15 items-center justify-center">🛵</span>Voy<span class="text-s">Ya</span></h1>
     <div id="hr" class="flex items-center gap-2"></div>
   </div>
   <nav id="nav" class="max-w-xl mx-auto px-2 flex text-sm font-semibold"></nav>
@@ -61,7 +69,7 @@ let watchId=null, gpsTimer=null, lastPos=null, shownAct=null, nSub='pedidos', ad
 
 const toast = m => { const t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),2800); };
 const icons = () => lucide.createIcons();
-const fail = er => { app.innerHTML=`<div class="${CARD} text-red-700">No se pudo conectar: ${e(er.message||er)}.<br>Revisa tu conexión y que hayas ejecutado schema.sql.</div>`; };
+const fail = er => { console.error('[VoyYa]',er); app.innerHTML=`<div class="${CARD} border-red-200 text-red-700"><b class="block mb-1">No se pudo completar la operación</b><p class="text-sm">${e(er?.message||er||'Error desconocido')}</p><p class="text-xs text-slate-500 mt-2">Comprueba tu conexión y la configuración de Supabase. No ejecutes un SQL que borre tablas si ya tienes datos.</p><button onclick="render()" class="${BTN} mt-3">Reintentar</button></div>`; };
 function unsub(){ chans.forEach(c=>sb.removeChannel(c)); chans=[]; if(M){ try{M.map.remove()}catch{} M=null; } }
 function listen(name,table,filter,fn){ const c={event:'*',schema:'public',table}; if(filter)c.filter=filter; chans.push(sb.channel(name+Math.random()).on('postgres_changes',c,fn).subscribe()); }
 const dist=(a,b,c,d)=>{const r=x=>x*Math.PI/180,h=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 12742*Math.asin(Math.sqrt(h))};
@@ -126,10 +134,12 @@ function auth(rol,done){
 /* ---------- Navegación ---------- */
 function go(t){ tab=t; unsub(); neg=null; shownAct=null; render(); }
 async function render(){
-  await me(); head();
-  const T=ADM?[['admin','Administración']]:[['cliente','Pedir'],['negocio','Mi negocio'],['repartidor','Repartidor']];
-  document.getElementById('nav').innerHTML=T.map(([k,n])=>`<button onclick="go('${k}')" class="flex-1 py-3 border-b-4 ${tab===k?'border-s':'border-transparent opacity-70'}">${n}</button>`).join('');
-  ({cliente:vCliente,negocio:vNegocio,repartidor:vRepartidor,soporte:vSoporte,admin:vAdmin})[tab](); icons();
+  try{
+    await me(); head();
+    const T=ADM?[['admin','Administración']]:[['cliente','Explorar'],['negocio','Mi negocio'],['repartidor','Repartidor']];
+    document.getElementById('nav').innerHTML=T.map(([k,n])=>`<button onclick="go('${k}')" class="flex-1 py-3 border-b-4 ${tab===k?'border-s':'border-transparent opacity-75'}">${n}</button>`).join('');
+    await ({cliente:vCliente,negocio:vNegocio,repartidor:vRepartidor,soporte:vSoporte,admin:vAdmin})[tab](); icons();
+  }catch(er){fail(er)}
 }
 
 /* ---------- Mapa (Leaflet + OpenStreetMap) ---------- */
@@ -152,7 +162,8 @@ async function vCliente(){
   const load=async()=>{
     const {data,error}=await sb.from('negocios').select('*').eq('activo',true).order('nombre'); if(error) return fail(error);
     NEGS=data; if(neg||tab!=='cliente') return;
-    app.innerHTML=`<h2 class="text-xl font-bold mb-3">¿Qué te llevamos hoy?</h2>`+(data.length?data.map(n=>`<button onclick="openNeg('${n.id}')" class="${CARD} w-full flex items-center gap-4 mb-3 text-left active:scale-[.98]"><span class="text-4xl">${e(n.emoji)}</span><span><b class="block text-lg">${e(n.nombre)}</b><span class="text-slate-500 text-sm">${e(n.categoria)}</span></span></button>`).join(''):`<p class="text-slate-500">Aún no hay negocios abiertos. Vuelve pronto.</p>`);
+    app.innerHTML=`<section class="hero-voyya mb-4"><div class="text-sm font-semibold opacity-90">DELIVERY LOCAL · SANCTI SPÍRITUS</div><h2 class="text-2xl font-black mt-1">¿Qué te llevamos hoy?</h2><p class="text-sm opacity-90 mt-1">Tus comercios favoritos, a un toque de distancia.</p></section><input id="buscarNeg" class="${INP} mb-3" placeholder="🔎 Buscar tienda, cafetería, comida..." autocomplete="off"><div id="listaNeg">`+(data.length?data.map(n=>`<button onclick="openNeg('${n.id}')" data-search="${e((n.nombre+' '+n.categoria).toLowerCase())}" class="${CARD} w-full flex items-center gap-4 mb-3 text-left"><span class="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-3xl">${e(n.emoji)}</span><span class="flex-1 min-w-0"><b class="block text-base">${e(n.nombre)}</b><span class="text-slate-500 text-sm">${e(n.categoria)}</span></span><span class="text-v text-xl">›</span></button>`).join(''):`<div class="${CARD} text-center py-8"><div class="text-4xl mb-2">🛵</div><b>Aún no hay negocios disponibles</b><p class="text-sm text-slate-500 mt-1">Vuelve pronto, estamos preparando la oferta local.</p></div>`)+`</div>`;
+     const search=document.getElementById('buscarNeg'); if(search) search.oninput=()=>{const q=search.value.toLowerCase().trim();document.querySelectorAll('#listaNeg [data-search]').forEach(x=>x.classList.toggle('hidden',!x.dataset.search.includes(q)));};
   };
   unsub(); listen('cn','negocios',null,load); load();
 }
@@ -165,12 +176,13 @@ const cartTotal=()=>Object.values(cart.items).reduce((s,i)=>s+i.q*i.p.precio,0),
 function chg(pid,d){ const p=prods.find(x=>x.id==pid), it=cart.items[pid]||{p,q:0}; it.q=Math.max(0,it.q+d); it.q?cart.items[pid]=it:delete cart.items[pid]; drawNeg(); }
 function drawNeg(){
   CK.out=false;
-  app.innerHTML=`<button onclick="go('cliente')" class="font-semibold mb-3 text-v">← Negocios</button><h2 class="text-xl font-bold mb-3">${e(neg.emoji)} ${e(neg.nombre)}</h2>`+
-  (prods.length?prods.map(p=>{const q=cart.items[p.id]?.q||0;return `<div class="${CARD} mb-2 flex items-center gap-3">
-    ${p.foto?`<img src="${e(p.foto)}" loading="lazy" class="w-16 h-16 rounded-xl object-cover">`:`<div class="w-16 h-16 rounded-xl bg-slate-100 flex items-center justify-center text-2xl">${e(neg.emoji)}</div>`}
-    <div class="flex-1"><b>${e(p.nombre)}</b><div class="text-slate-500 text-sm">${cup(p.precio)}</div></div>
-    <div class="flex items-center gap-2">${q?`<button onclick="chg('${p.id}',-1)" class="w-9 h-9 rounded-full bg-slate-200 font-bold">−</button><b>${q}</b>`:''}<button onclick="chg('${p.id}',1)" class="w-9 h-9 rounded-full bg-v text-white font-bold">+</button></div></div>`}).join(''):`<p class="text-slate-500">Este negocio no tiene productos disponibles ahora.</p>`)+
-  (cartCount()?`<div class="fixed bottom-0 inset-x-0 p-3 bg-white border-t z-30"><div class="max-w-xl mx-auto"><button onclick="drawCheckout()" class="${BTN} w-full">Pedir ${cartCount()} · ${cup(cartTotal())}</button></div></div>`:'');
+  app.innerHTML=`<button onclick="go('cliente')" class="font-semibold mb-3 text-v">← Negocios</button><section class="hero-voyya mb-4"><div class="text-3xl mb-1">${e(neg.emoji)}</div><h2 class="text-xl font-black">${e(neg.nombre)}</h2><p class="text-sm opacity-90">Explora el menú y añade tus productos al pedido.</p></section><input id="buscarProd" class="${INP} mb-3" placeholder="🔎 Buscar en el menú..." autocomplete="off">`+
+  (prods.length?`<div id="listaProd">`+prods.map(p=>{const q=cart.items[p.id]?.q||0;return `<div data-search="${e(p.nombre.toLowerCase())}" class="${CARD} mb-3 flex items-center gap-3">
+    ${p.foto?`<img src="${e(p.foto)}" loading="lazy" class="w-20 h-20 rounded-xl object-cover product-photo">`:`<div class="w-20 h-20 rounded-xl product-photo flex items-center justify-center text-3xl">${e(neg.emoji)}</div>`}
+    <div class="flex-1 min-w-0"><b class="block">${e(p.nombre)}</b><div class="text-v font-extrabold mt-1">${cup(p.precio)}</div></div>
+    <div class="flex items-center gap-2">${q?`<button onclick="chg('${p.id}',-1)" class="w-9 h-9 rounded-full bg-slate-100 font-bold">−</button><b>${q}</b>`:''}<button onclick="chg('${p.id}',1)" aria-label="Añadir ${e(p.nombre)}" class="w-10 h-10 rounded-full bg-v text-white font-bold shadow">+</button></div></div>`}).join('')+`</div>`:`<div class="${CARD} text-center py-8"><div class="text-4xl mb-2">🍽️</div><b>Menú sin productos disponibles</b><p class="text-sm text-slate-500 mt-1">Este negocio todavía no ha publicado productos.</p></div>`)+
+  (cartCount()?`<div class="fixed bottom-0 inset-x-0 p-3 bg-white/95 backdrop-blur border-t z-30 safe-area-bottom"><div class="max-w-xl mx-auto"><button onclick="drawCheckout()" class="${BTN} w-full shadow-lg">🛒 Ver pedido · ${cartCount()} · ${cup(cartTotal())}</button></div></div>`:'');
+  const ps=document.getElementById('buscarProd'); if(ps) ps.oninput=()=>{const q=ps.value.toLowerCase().trim();document.querySelectorAll('#listaProd [data-search]').forEach(x=>x.classList.toggle('hidden',!x.dataset.search.includes(q)));};
 }
 function drawCheckout(){
   CK.out=true;
@@ -188,10 +200,10 @@ function drawCheckout(){
     <button class="${BTN} w-full">Confirmar pedido</button></form>`;
 }
 async function sendOrder(ev,envio,km){
-  ev.preventDefault(); const b=ev.target.querySelector('button:last-child'); b.disabled=true; const sub=cartTotal();
+  ev.preventDefault(); const b=ev.target.querySelector('button:last-child'); if(b.disabled)return; b.disabled=true; const sub=cartTotal(); if(!U||!neg||!cartCount()){b.disabled=false;return toast('Tu sesión o carrito no está disponible');}
   const items=Object.values(cart.items).map(i=>({n:i.p.nombre,q:i.q,p:i.p.precio}));
   const {data,error}=await sb.from('pedidos').insert({cliente_id:U.id,negocio_id:neg.id,cliente_nombre:U.nombre+' '+U.apellido,cliente_tel:U.telefono,direccion:fd(ev.target).dir,lat:CK.lat,lng:CK.lng,items,subtotal:sub,envio,distancia_km:km==null?null:+km.toFixed(2),total:sub+envio,estado:'pendiente'}).select().single();
-  if(error){ b.disabled=false; return toast('No se envió. Intenta de nuevo.'); }
+  if(error){ b.disabled=false; console.error(error); return toast('No se envió: '+error.message); }
   localStorage.voyya_ped=data.id; cart={nid:null,items:{}}; CK={lat:null,lng:null,dir:''}; neg=null; render();
 }
 async function track(id){
@@ -245,19 +257,31 @@ async function vNegocio(){
   };
   listen('np','pedidos',`negocio_id=eq.${n.id}`,load); load();
 }
-const setEst=(id,est)=>sb.from('pedidos').update({estado:est}).eq('id',id).then(r=>r.error&&toast('No se pudo actualizar'));
-function setLoc(id){ gps(async c=>{ await sb.from('negocios').update({lat:c.latitude,lng:c.longitude}).eq('id',id); toast('Ubicación guardada'); render(); }); }
-async function subir(file){ // comprime a 700 px / JPEG 70 % para conexiones lentas
-  const img=await createImageBitmap(file), s=Math.min(1,700/Math.max(img.width,img.height)), c=document.createElement('canvas');
-  c.width=img.width*s; c.height=img.height*s; c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-  const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.7)), n=`${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
-  const {error}=await sb.storage.from('fotos').upload(n,b,{contentType:'image/jpeg'}); if(error) throw error;
-  return sb.storage.from('fotos').getPublicUrl(n).data.publicUrl;
+const setEst=async(id,est)=>{const {error}=await sb.from('pedidos').update({estado:est}).eq('id',id);if(error)return toast('No se pudo actualizar: '+error.message);toast('Pedido actualizado');};
+function setLoc(id){ gps(async c=>{const {error}=await sb.from('negocios').update({lat:c.latitude,lng:c.longitude}).eq('id',id);if(error)return toast('No se pudo guardar la ubicación');toast('Ubicación guardada');render();}); }
+async function subir(file){
+  if(!file||!file.type.startsWith('image/')) throw new Error('Selecciona una imagen válida');
+  let blob=file;
+  if(window.createImageBitmap){
+    const img=await createImageBitmap(file), scale=Math.min(1,800/Math.max(img.width,img.height)), c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(img.width*scale)); c.height=Math.max(1,Math.round(img.height*scale));
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    blob=await new Promise((resolve,reject)=>c.toBlob(x=>x?resolve(x):reject(new Error('No se pudo procesar la imagen')),'image/jpeg',.76));
+  }
+  const name=`${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
+  const {error}=await sb.storage.from('fotos').upload(name,blob,{contentType:'image/jpeg',upsert:false}); if(error) throw error;
+  return sb.storage.from('fotos').getPublicUrl(name).data.publicUrl;
 }
 async function addProd(ev,nid){
-  ev.preventDefault(); const b=ev.target.querySelector('button'); b.disabled=true; const f=ev.target; let foto=null;
-  try{ const file=f.foto.files[0]; if(file) foto=await subir(file); }catch{ toast('No se pudo subir la foto'); }
-  await sb.from('productos').insert({negocio_id:nid,nombre:f.nombre.value,precio:+f.precio.value,foto}); f.reset(); b.disabled=false;
+  ev.preventDefault(); const form=ev.target, b=form.querySelector('button'); b.disabled=true;
+  try{
+    const nombre=form.nombre.value.trim(), precio=Number(form.precio.value);
+    if(!nombre||!Number.isFinite(precio)||precio<0) throw new Error('Revisa el nombre y el precio');
+    let foto=null; const file=form.foto.files[0]; if(file) foto=await subir(file);
+    const {error}=await sb.from('productos').insert({negocio_id:nid,nombre,precio,foto});
+    if(error) throw error;
+    toast('Producto añadido correctamente'); form.reset(); await render();
+  }catch(er){toast('No se pudo añadir: '+(er.message||'error'));b.disabled=false}
 }
 
 /* =================== REPARTIDOR =================== */
