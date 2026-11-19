@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#141414">
-<title>VoyYa · Delivery en Sancti Spíritus</title>
+<title>VoyYa</title>
 <link rel="icon" href="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAwEBAQEBAAAAAAAAAAAABQYHBAMIAQL/xAAwEAABAwMDAgQEBgMAAAAAAAABAgMEAAURBhIhMUEUIlFhBzJCcRMVJIGhsSPB4f/EABsBAAIDAQEBAAAAAAAAAAAAAAIDBAUGAAEH/8QAKREAAgEDAwMDBAMAAAAAAAAAAQIDAAQREiExBVGBQZHBEyIy8GFx4f/aAAwDAQACEQMRAD8AEoZzWpqNntXVlrJHFFIsfcRxXzCSXFbLisbMHd2rY3ayR8tH7fb95HFLvxJ1mzop+3wmoaJM+WN4/FWUttIzgFWOSSc8e1ItxPey/Rtxk8+KVNOkK6nNdV2ogfLWR637e1MNjuq5lzatV1YitTX43i2HIjpcadR3HPKVDPSiM+2gZwKC5M9lN9C4GG+K8inSZdSHap+7F29qzrZx2pmmxdpPFCXmsZqRHNqpw3rvGbyRR+2sAqTnABIHNCYackUfLjMO1uSpKlIabIO8JztJ4B/72pIUTSiMnGaFifSu8mXC5aRNADKVF5LZwRwD5u4wP7qFayuA17qoOokR1vtMpaixiMbvPghRP1YOevSqDq1Cfye6oG5l0g4cScLUPQq6kex4qf26+2o2CIn8ihuwLUjxK1yQoKddwQeRjKio9OR09q0vSojar9m5499/O9JuURgFYfz7f5Tx8NNHXWJq+0TJUWCxEt0ZxUl+KFI5KVpwvzHf1HPt7VZUMtz4CZTaSltW4DdweCR/rP2NTjTdp1InSvhUzo7cSWlqYzvyvLS07gN48xweDuz04qoWhUuVALk5MNCyeUR0qSEngdyc5xnPH2ql62Yblndjl0wB6bbn5qPgx4ZTsfNJl3jBJVtHFK8tvBNUC+MYzSVPRgmqazlyKnKc1zg9RRi7yhH084pSN6D/AIljnCQsbd20dcEjr60DiL5GKarI82hQKz/GT/PFSHYo4ftXasHNI13sGp59qfkwbU7MRIQ1HQ0tYb82CFLGeqehOPSpBqKwXnTLkdi5IZU0gbkuZC04SflHJBGTXpb4jXibGs0dy2PQ0PblgoluqbDiNvIS5jCVcDAPBqAyrq3qXw3h3UIljgMOYK8kngAjCj9vath0i6lZEmCjQeT/AFt481X3GmcMrHBHA/eaZ/g1qR3T8aY9IkqcipbD7jLhy2yCVYSn0BTg47Gq3ozUFwuNzU4/GhRbc6gkID6lvj0Kk7do9wCcetRKFpO8GxToke2zXpsgJJwwUg7DkJJ6UjobkTHGpq1yJMhtBcktOb1Dy8leewwR9v3FBPYp1OWRg4G/bPIA23HOPXtQu620SqV3I+TzXsK9gKSSOaRbmMKVRTR16dv2hLTcJOS+6yQtR6qKVFOf3xmhd0PmNYiGFoJWiblSR7HFToW1KDQeMvBHNHID2CPNildp3Het7Erb3qwmi1U4im+Z+ttkiItwKbeQW1oWkKSQR3FJ2jNKPaOny5VpcivPyMBTkhrKkpH0pIwAPsOa3t3EpHWv2LkfWkxtPFG0Sn7W5HegMSMdTDemuNqC6pH6iIw57tukf3U/vOhLVdrvJeakXO0sTM+JjMIQpCwVblJSvqlJPJHIz0oym5n1r4q4ZOc811tJPasWgOknt+4oHt43/IUwhmJbbXHgwGw1EjthppA+lIpZuTmVGurlxK0YJoVKf3E80EELBiW3JpirjYV//9k=">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
@@ -13,8 +13,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
 <script>tailwind.config={theme:{extend:{colors:{v:'var(--v)',vt:'var(--vt)',s:'var(--s)',ink:'var(--ink)',hd:'var(--hd)'}}}}</script>
 <style>
- :root{--v:#FFC400;--vt:#1A1A1A;--s:#FFE58A;--ink:#1A1A1A;--bg:#FFF8E1;--hd:#141414}
- body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent}
+ :root{--v:#FFC400;--vt:#1A1A1A;--s:#FFE58A;--ink:#1A1A1A;--bg:#FFF8E1;--hd:#141414;--rb:16px;--rc:24px;--ri:16px}
+ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent;background-size:cover;background-attachment:fixed;background-position:center}
  .fade{animation:fd .35s ease both} @keyframes fd{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
  .sk{background:linear-gradient(90deg,#0000000d 25%,#0000001f 50%,#0000000d 75%);background-size:200% 100%;animation:sk 1.2s infinite} @keyframes sk{to{background-position:-200% 0}}
  @keyframes bar{from{transform:translateX(-30%)}to{transform:translateX(120%)}}
@@ -32,7 +32,8 @@
   <p class="mt-3 text-sm font-semibold text-black/60">Cargando…</p>
 </div>
 
-<header class="sticky top-0 z-20 bg-hd text-white shadow-lg" style="padding-top:env(safe-area-inset-top)">
+<script>window.IMG0=document.getElementById('splashimg').src;try{var _s=localStorage.voyya_splash;if(_s){var _i=document.getElementById('splashimg');_i.onerror=function(){this.onerror=null;this.src=window.IMG0};_i.src=_s}}catch(e){}</script>
+<header id="hdr" class="sticky top-0 z-20 bg-hd text-white shadow-lg" style="padding-top:env(safe-area-inset-top)">
   <div class="max-w-xl mx-auto px-4 py-2.5 flex items-center justify-between">
     <h1 class="flex items-center gap-2 text-2xl font-black tracking-tight"><img id="logo" alt="" class="w-9 h-9 rounded-full object-cover border-2 border-v">Voy<span class="text-v -ml-1.5">Ya</span></h1>
     <div id="hr" class="flex items-center gap-2"></div>
@@ -50,13 +51,12 @@
 const SUPABASE_URL = 'https://efxosdwucdkvveymvuxq.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_x5rb1Xpe8-GM074IfvNRqg_tvWEm1RA';
 const ADMIN_PASS = '93091414047';
-const VERSION = '3.0';
+const VERSION = '3.1';
 const SQL_ACTUAL = "-- VoyYa v3 · SEGURO DE EJECUTAR VARIAS VECES: no borra ningún dato.\n-- Pégalo completo en Supabase > SQL Editor > New query > Run.\n\ncreate table if not exists usuarios (\n  id uuid primary key default gen_random_uuid(),\n  rol text not null check (rol in ('cliente','negocio','repartidor')),\n  nombre text not null, apellido text not null,\n  telefono text not null unique, tarjeta text not null, clave text not null,\n  saldo numeric default 0, baneado boolean default false,\n  ultimo_visto timestamptz, creado timestamptz default now()\n);\ncreate table if not exists negocios (\n  id uuid primary key default gen_random_uuid(),\n  dueno_id uuid references usuarios(id) on delete cascade,\n  nombre text not null, categoria text default 'Tienda', emoji text default '🏪',\n  lat double precision, lng double precision,\n  activo boolean default false, abierto boolean default true,\n  creado timestamptz default now()\n);\ncreate table if not exists productos (\n  id uuid primary key default gen_random_uuid(),\n  negocio_id uuid references negocios(id) on delete cascade,\n  nombre text not null, precio numeric not null, foto text,\n  disponible boolean default true, creado timestamptz default now()\n);\ncreate table if not exists pedidos (\n  id uuid primary key default gen_random_uuid(),\n  cliente_id uuid references usuarios(id) on delete set null,\n  negocio_id uuid references negocios(id) on delete set null,\n  repartidor_id uuid references usuarios(id) on delete set null,\n  cliente_nombre text, cliente_tel text, direccion text, nota text,\n  lat double precision, lng double precision,\n  items jsonb not null, subtotal numeric default 0, envio numeric default 0,\n  distancia_km numeric, total numeric not null,\n  estado text not null default 'pendiente',\n  creado timestamptz default now()\n);\ncreate table if not exists ubicaciones (\n  repartidor_id uuid primary key references usuarios(id) on delete cascade,\n  pedido_id uuid, lat double precision not null, lng double precision not null,\n  actualizado timestamptz default now()\n);\ncreate table if not exists recargas (\n  id uuid primary key default gen_random_uuid(),\n  repartidor_id uuid references usuarios(id) on delete cascade,\n  nombre text, telefono text, monto numeric not null,\n  estado text default 'pendiente', creado timestamptz default now()\n);\ncreate table if not exists soporte (\n  id uuid primary key default gen_random_uuid(),\n  usuario_id uuid references usuarios(id) on delete cascade,\n  nombre text, rol text, mensaje text not null, respuesta text,\n  estado text default 'abierto', creado timestamptz default now()\n);\ncreate table if not exists config (clave text primary key, valor text);\ncreate table if not exists presencia (\n  usuario_id uuid primary key references usuarios(id) on delete cascade,\n  ultimo_visto timestamptz default now()\n);\n\n-- Columnas nuevas (v3)\nalter table negocios add column if not exists abierto boolean default true;\nalter table pedidos add column if not exists nota text;\nalter table pedidos drop constraint if exists pedidos_estado_check;\nalter table pedidos add constraint pedidos_estado_check\n  check (estado in ('pendiente','preparando','listo','en_camino','entregado','rechazado','cancelado'));\n\n-- Aprobación de cuentas: los usuarios que ya existen quedan aprobados; los nuevos esperan al admin\ndo $$ begin\n  if not exists (select 1 from information_schema.columns where table_name='usuarios' and column_name='aprobado') then\n    alter table usuarios add column aprobado boolean default false;\n    update usuarios set aprobado = true;\n  end if;\nend $$;\n\n-- Ajustes por defecto (no pisa los que ya cambiaste)\ninsert into config (clave, valor) values\n  ('tarifa_km','150'),('comision','10'),('tarjeta',''),('telefono',''),('aviso',''),\n  ('tema','moto'),('aprobar_clientes','no'),('pausa','no'),('envio_min','0')\non conflict (clave) do nothing;\n-- Tema nuevo por defecto (solo la primera vez)\ndo $$ begin\n  if not exists (select 1 from config where clave='v3') then\n    update config set valor='moto' where clave='tema' and valor='verde';\n    insert into config values ('v3','1');\n  end if;\nend $$;\n\n-- Tiempo real\nalter table pedidos replica identity full;\ndo $$ declare t text; begin\n  foreach t in array array['usuarios','negocios','productos','pedidos','ubicaciones','recargas','soporte','config','presencia'] loop\n    begin execute format('alter publication supabase_realtime add table %I', t);\n    exception when duplicate_object then null; end;\n  end loop;\nend $$;\n\n-- Permisos + RLS (políticas abiertas: ver nota de seguridad antes de usar con gente real)\ngrant usage on schema public to anon;\ngrant all on all tables in schema public to anon;\ndo $$ declare t text; begin\n  foreach t in array array['usuarios','negocios','productos','pedidos','ubicaciones','recargas','soporte','config','presencia'] loop\n    execute format('alter table %I enable row level security', t);\n    execute format('drop policy if exists abierto on %I', t);\n    execute format('create policy abierto on %I for all to anon using (true) with check (true)', t);\n  end loop;\nend $$;\n\n-- Fotos de productos\ninsert into storage.buckets (id, name, public) values ('fotos','fotos',true) on conflict do nothing;\ndrop policy if exists fotos_abierto on storage.objects;\ncreate policy fotos_abierto on storage.objects for all to anon using (bucket_id='fotos') with check (bucket_id='fotos');\n";
 /* ======================================= */
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const app = document.getElementById('app');
-const IMG = document.getElementById('splashimg').src;
-document.getElementById('logo').src = IMG;
+const IMG = window.IMG0 || document.getElementById('splashimg').src;
 const e = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cup = n => Number(n||0).toLocaleString('es') + ' CUP';
 const fd = f => Object.fromEntries(new FormData(f));
@@ -64,15 +64,33 @@ const L = {pendiente:'Recibido',preparando:'En preparación',listo:'Listo, busca
 const EC = {pendiente:'bg-amber-100 text-amber-800',preparando:'bg-blue-100 text-blue-800',listo:'bg-purple-100 text-purple-800',en_camino:'bg-orange-100 text-orange-800',entregado:'bg-green-100 text-green-800',rechazado:'bg-red-100 text-red-800',cancelado:'bg-slate-200 text-slate-700'};
 const tag = s => `<span class="text-xs font-bold px-2 py-0.5 rounded-full ${EC[s]||''}">${L[s]||s}</span>`;
 const FIN = ['entregado','rechazado','cancelado'];
-const BTN='bg-v text-vt rounded-2xl px-4 py-3 font-bold shadow active:scale-95 disabled:opacity-50', BTN2='bg-ink text-white rounded-2xl px-4 py-3 font-bold active:scale-95';
-const INP='w-full border-2 border-black/10 rounded-2xl px-4 py-3 bg-white text-slate-900', CARD='bg-white rounded-3xl p-4 shadow-md border border-black/5 text-slate-900 fade', CHIP='px-3 py-1.5 rounded-xl border border-black/15 text-sm font-semibold bg-white text-slate-900 active:scale-95';
+const BTN='bg-v text-vt rounded-[var(--rb)] px-4 py-3 font-bold shadow active:scale-95 disabled:opacity-50', BTN2='bg-ink text-white rounded-[var(--rb)] px-4 py-3 font-bold active:scale-95';
+const INP='w-full border-2 border-black/10 rounded-[var(--ri)] px-4 py-3 bg-white text-slate-900', CARD='bg-white rounded-[var(--rc)] p-4 shadow-md border border-black/5 text-slate-900 fade', CHIP='px-3 py-1.5 rounded-[var(--rb)] border border-black/15 text-sm font-semibold bg-white text-slate-900 active:scale-95';
 const TEMAS = { // [primario, texto sobre primario, resalte, texto, fondo, cabecera]
   moto:['#FFC400','#1A1A1A','#FFE58A','#1A1A1A','#FFF8E1','#141414'], verde:['#0E9F6E','#FFFFFF','#FDE68A','#0F2A22','#F0FAF5','#0B3D2E'],
   azul:['#2563EB','#FFFFFF','#FDE68A','#0F172A','#EFF4FF','#0B1B4D'], rosa:['#DB2777','#FFFFFF','#FDE68A','#2A0F1C','#FFF1F7','#4A0D2A'], morado:['#7C3AED','#FFFFFF','#FDE68A','#1E1B4B','#F5F3FF','#2E1065']};
 const CFG = {tarifa_km:'150',comision:'10',tarjeta:'',telefono:'',aviso:'',tema:'moto',aprobar_clientes:'no',pausa:'no',envio_min:'0'};
+/* ---- Diseño personalizable (se guarda en config.diseno y se aplica a todos en tiempo real) ---- */
+const RB={cuadrado:'4px',suave:'10px',redondo:'16px',pildora:'9999px'}, RC={cuadrado:'6px',suave:'14px',redondo:'24px'};
+const DIS0={titulo:'VoyYa',hero_on:true,hero_img:true,hero_titulo:'Pide ya,\nllega rápido',hero_sub:'Delivery en Sancti Spíritus 🛵',col:{v:'',vt:'',hd:'',bg:''},fondo_img:'',rb:'redondo',rc:'redondo',nav_pos:'abajo',nav_orden:['cliente','negocio','repartidor'],nav_txt:{cliente:'Pedir',negocio:'Mi negocio',repartidor:'Repartidor',admin:'Administración'},home_orden:['hero','pedidos','buscar'],ico:{}};
+const ICOS=[['cliente','Menú: Pedir','shopping-bag'],['negocio','Menú: Mi negocio','store'],['repartidor','Menú: Repartidor','bike'],['admin','Menú: Administración','shield'],['soporte','Botón de soporte','message-circle'],['atras','Flecha de volver','arrow-left'],['siguiente','Flecha de las listas','chevron-right'],['paso1','Paso: Recibido','📥'],['paso2','Paso: Preparando','👨‍🍳'],['paso3','Paso: En camino','🛵'],['paso4','Paso: Entregado','✅'],['vacio_buscar','Sin resultados','🔎'],['vacio_pedidos','Sin pedidos (negocio)','📭'],['vacio_reparto','Sin pedidos (repartidor)','🛵']];
+const ICO0=Object.fromEntries(ICOS.map(a=>[a[0],a[2]]));
+const IMGS=[['logo','Logo de la cabecera y del acceso'],['hero','Imagen del banner de inicio'],['splash','Imagen de la pantalla de carga']];
+const clone=o=>JSON.parse(JSON.stringify(o));
+let DIS=clone(DIS0);
+const isU=v=>/^(https?:|data:)/.test(v||''), isL=v=>/^[a-z][a-z0-9-]*$/.test(v||'');
+function lk(n){ try{ return !!lucide.icons[n.replace(/(^|-)([a-z0-9])/g,(m,a,c)=>c.toUpperCase())]; }catch{ return false; } }
+function ico(s,cls='w-6 h-6',S=DIS,d=false){ // un icono: nombre de Lucide, emoji o imagen subida
+  const v=(!d&&S.ico&&S.ico[s])||ICO0[s];
+  if(isU(v)) return `<img src="${e(v)}" class="${cls} object-contain" alt="">`;
+  if(isL(v)){ if(!lk(v)&&!d) return ico(s,cls,S,true); return `<i data-lucide="${e(v)}" class="${cls}"></i>`; }
+  return `<span class="text-2xl leading-none">${e(v)}</span>`;
+}
+const imgSlot=(s,S=DIS)=>isU(S.ico&&S.ico[s])?S.ico[s]:IMG;
+const NB=()=>DIS.nav_pos==='arriba'?'bottom-3':'bottom-[4.5rem]';
 
 let tab='cliente', cv='home', chans=[], NEGS=[], MIS=[], neg=null, prods=[], cart={nid:null,items:{}}, M=null, U=null, meT=0, curTrack=null;
-let ADM=false, asec='Resumen', uf='todos', pf='activos', editing=false, CK={lat:null,lng:null,dir:'',nota:''}, fq='', fc='', PR={};
+let ADM=false, asec='Resumen', uf='todos', pf='activos', editing=false, CK={lat:null,lng:null,dir:'',nota:''}, fq='', fc='', PR={}, DW=null, booted=false, GHT=null, HR=false;
 let watchId=null, gpsTimer=null, lastPos=null, shownAct=null, nSub='pedidos', admTm=null;
 
 const draw = h => { app.innerHTML=h; lucide.createIcons(); };
@@ -87,12 +105,25 @@ function ding(){ try{ navigator.vibrate&&navigator.vibrate([200,100,200]); const
 async function upd(t,id,o){ const {error}=await sb.from(t).update(o).eq('id',id); if(error){ toast('Error: '+error.message); return false; } return true; }
 
 /* ---------- Configuración global y temas (en tiempo real) ---------- */
+function mergeD(o){
+  const d=clone(DIS0); for(const k in o){ if(k==='col'||k==='nav_txt'||k==='ico') d[k]={...d[k],...o[k]}; else if(o[k]!==undefined) d[k]=o[k]; }
+  const fx=(a,b)=>[...a.filter(x=>b.includes(x)),...b.filter(x=>!a.includes(x))]; d.nav_orden=fx(d.nav_orden,DIS0.nav_orden); d.home_orden=fx(d.home_orden,DIS0.home_orden); return d;
+}
+function applyDiseno(){
+  const t=TEMAS[CFG.tema]||TEMAS.moto, c=DIS.col||{}, s=document.documentElement.style;
+  const vals=[c.v||t[0],c.vt||t[1],t[2],t[3],c.bg||t[4],c.hd||t[5]];
+  ['--v','--vt','--s','--ink','--bg','--hd'].forEach((k,i)=>s.setProperty(k,vals[i]));
+  const rb=RB[DIS.rb]||RB.redondo; s.setProperty('--rb',rb); s.setProperty('--rc',RC[DIS.rc]||RC.redondo); s.setProperty('--ri',DIS.rb==='pildora'?'24px':rb);
+  document.body.style.backgroundImage=isU(DIS.fondo_img)?`url("${DIS.fondo_img}")`:'';
+  document.querySelector('meta[name=theme-color]').content=vals[5]; document.title=DIS.titulo||'VoyYa'; document.getElementById('logo').src=imgSlot('logo');
+  try{ if(isU(DIS.ico&&DIS.ico.splash)) localStorage.voyya_splash=DIS.ico.splash; else localStorage.removeItem('voyya_splash'); }catch{}
+}
 async function loadCfg(){
   const {data}=await sb.from('config').select('*'); (data||[]).forEach(r=>CFG[r.clave]=r.valor);
-  const t=TEMAS[CFG.tema]||TEMAS.moto, s=document.documentElement.style;
-  ['--v','--vt','--s','--ink','--bg','--hd'].forEach((k,i)=>s.setProperty(k,t[i]));
-  document.querySelector('meta[name=theme-color]').content=t[5];
+  try{ DIS=mergeD(JSON.parse(CFG.diseno||'{}')); }catch{ DIS=mergeD({}); }
+  applyDiseno();
   document.getElementById('ban').innerHTML=CFG.aviso?`<div class="bg-s text-ink rounded-2xl px-4 py-2.5 text-sm font-bold shadow">📢 ${e(CFG.aviso)}</div>`:'';
+  if(booted){ renderNav(); head(); if(tab==='cliente'&&cv==='home'&&HR) drawHome(); }
 }
 sb.channel('cfg').on('postgres_changes',{event:'*',schema:'public',table:'config'},loadCfg).subscribe();
 
@@ -114,13 +145,16 @@ async function hb(){ // latido: marca "conectado" y cierra sesión si te banean 
   if(data&&(data.baneado||data.aprobado===false)){ localStorage.removeItem('voyya_u'); U=null; toast('Tu sesión terminó'); render(); }
 }
 function salir(){ localStorage.removeItem('voyya_u'); stopGPS(); U=null; go('cliente'); }
-function head(){ document.getElementById('hr').innerHTML=(U?`<span class="text-xs text-white/70">${e(U.nombre)}</span><button onclick="salir()" class="text-xs underline text-white/70">Salir</button>`:'')+`<button onclick="U?go('soporte'):toast('Inicia sesión para escribir a soporte')" class="p-2 text-white" aria-label="Soporte"><i data-lucide="message-circle" class="w-5 h-5"></i></button>`; }
+function head(){
+  document.getElementById('hr').innerHTML=(U?`<span class="text-xs text-white/70">${e(U.nombre)}</span><button onclick="salir()" class="text-xs underline text-white/70">Salir</button>`:'')+`<button onclick="U?go('soporte'):toast('Inicia sesión para escribir a soporte')" class="p-2 text-white" aria-label="Soporte">${ico('soporte','w-5 h-5')}</button>`;
+  lucide.createIcons();
+}
 
 /* ---------- Registro / acceso (nombre, apellido, teléfono, tarjeta) ---------- */
 function auth(rol,done){
   let reg=false; const R={cliente:'Cliente',negocio:'Dueño de negocio',repartidor:'Repartidor'};
   const draw1=()=>{
-    draw(`<form class="${CARD} space-y-3"><div class="text-center"><img src="${IMG}" class="w-20 h-20 rounded-3xl object-cover mx-auto shadow-lg" alt=""><h2 class="font-black text-xl mt-2">${reg?'Crear cuenta':'Entrar'}</h2><p class="text-sm text-slate-500">${R[rol]}</p></div>`+
+    draw(`<form class="${CARD} space-y-3"><div class="text-center"><img src="${imgSlot('logo')}" class="w-20 h-20 rounded-3xl object-cover mx-auto shadow-lg" alt=""><h2 class="font-black text-xl mt-2">${reg?'Crear cuenta':'Entrar'}</h2><p class="text-sm text-slate-500">${R[rol]}</p></div>`+
     (reg?`<input name="nombre" required placeholder="Nombre" class="${INP}"><input name="apellido" required placeholder="Apellido" class="${INP}">`:'')+
     `<input name="telefono" required inputmode="tel" placeholder="Número de teléfono" class="${INP}">`+
     (reg?`<input name="tarjeta" required inputmode="numeric" placeholder="Número de tarjeta" class="${INP}">`:'')+
@@ -153,10 +187,15 @@ function pend(u,done){
 
 /* ---------- Navegación ---------- */
 function go(t){ tab=t; cv='home'; neg=null; shownAct=null; unsub(); render(); }
+function renderNav(){
+  const nav=document.getElementById('nav'), top=DIS.nav_pos==='arriba';
+  if(top){ document.getElementById('hdr').appendChild(nav); nav.className='max-w-xl mx-auto px-2 flex'; nav.style.paddingBottom=''; }
+  else { document.body.appendChild(nav); nav.className='fixed bottom-0 inset-x-0 z-30 bg-hd flex max-w-xl mx-auto rounded-t-3xl shadow-[0_-4px_20px_#0004]'; nav.style.paddingBottom='env(safe-area-inset-bottom)'; }
+  nav.innerHTML=(ADM?['admin']:DIS.nav_orden).map(k=>`<button onclick="go('${k}')" class="flex-1 py-2.5 flex flex-col items-center gap-0.5 text-xs font-bold ${tab===k?'text-v':'text-white/60'}">${ico(k,'w-6 h-6')}${e(DIS.nav_txt[k]||k)}</button>`).join('');
+  lucide.createIcons();
+}
 async function render(){
-  await me(); head();
-  const T=ADM?[['admin','Administración','shield']]:[['cliente','Pedir','shopping-bag'],['negocio','Mi negocio','store'],['repartidor','Repartidor','bike']];
-  document.getElementById('nav').innerHTML=T.map(([k,n,i])=>`<button onclick="go('${k}')" class="flex-1 py-2.5 flex flex-col items-center gap-0.5 text-xs font-bold ${tab===k?'text-v':'text-white/60'}"><i data-lucide="${i}" class="w-6 h-6"></i>${n}</button>`).join('');
+  await me(); head(); renderNav();
   ({cliente:vCliente,negocio:vNegocio,repartidor:vRepartidor,soporte:vSoporte,admin:vAdmin})[tab](); lucide.createIcons();
 }
 
@@ -174,26 +213,28 @@ function pt(k,lat,lng,label,color){
 async function vCliente(){
   if(cv==='track'&&curTrack) return track(curTrack);
   if(cv==='neg'&&neg) return openNeg(neg.id);
-  unsub(); skel();
+  unsub(); skel(); HR=false;
   const load=async()=>{
     const [r1,r2]=await Promise.all([sb.from('negocios').select('*').eq('activo',true).order('nombre'),
       U?sb.from('pedidos').select('id,estado,total,negocios(nombre,emoji)').eq('cliente_id',U.id).order('creado',{ascending:false}).limit(6):Promise.resolve({data:[]})]);
-    if(r1.error) return fail(r1.error); NEGS=r1.data; MIS=r2.data||[];
+    if(r1.error) return fail(r1.error); NEGS=r1.data; MIS=r2.data||[]; HR=true;
     if(tab==='cliente'&&cv==='home') drawHome();
   };
   listen('cn','negocios',null,load); if(U) listen('cp','pedidos',`cliente_id=eq.${U.id}`,load); load();
 }
 function drawHome(){
-  const cats=[...new Set(NEGS.map(n=>n.categoria))];
-  draw(`<div class="rounded-3xl bg-gradient-to-br from-v to-orange-400 p-5 flex items-center gap-3 shadow-lg fade overflow-hidden"><div class="flex-1 text-vt"><h2 class="text-3xl font-black leading-none">Pide ya,<br>llega rápido</h2><p class="text-sm font-bold mt-2 opacity-80">Delivery en Sancti Spíritus 🛵</p></div><img src="${IMG}" alt="" class="w-28 h-28 rounded-3xl object-cover shadow-xl rotate-3"></div>`+
-  (CFG.pausa==='si'?`<div class="${CARD} mt-3 text-center font-bold">⏸️ Los pedidos están pausados por ahora. Vuelve en un rato.</div>`:'')+
-  (MIS.length?`<h3 class="font-black mt-5 mb-2">Mis pedidos</h3><div class="flex gap-2 overflow-x-auto pb-1">${MIS.map(p=>`<button onclick="track('${p.id}')" class="shrink-0 ${CARD} !p-3 text-left min-w-[150px]"><div class="text-sm font-bold">${e(p.negocios?.emoji||'📦')} ${e(p.negocios?.nombre||'Pedido')}</div>${tag(p.estado)}<div class="text-xs text-slate-500 mt-1">${cup(p.total)}</div></button>`).join('')}</div>`:'')+
-  `<input id="q" value="${e(fq)}" oninput="fq=this.value;lst()" placeholder="🔍 Buscar negocio" class="${INP} mt-5"><div class="flex gap-2 overflow-x-auto my-3">${['',...cats].map(c=>`<button data-c="${e(c)}" onclick="fc=this.dataset.c;drawHome()" class="shrink-0 px-4 py-1.5 rounded-full text-sm font-bold ${fc===c?'bg-ink text-white':'bg-white border border-black/10 text-slate-900'}">${e(c)||'Todos'}</button>`).join('')}</div><div id="lst"></div>`); lst();
+  const cats=[...new Set(NEGS.map(n=>n.categoria))], sec=x=>x?`<section class="mb-5">${x}</section>`:'';
+  const P={
+    hero:(DIS.hero_on?`<div class="rounded-[var(--rc)] bg-gradient-to-br from-v to-orange-400 p-5 flex items-center gap-3 shadow-lg fade overflow-hidden"><div class="flex-1 text-vt"><h2 class="text-3xl font-black leading-none">${e(DIS.hero_titulo).replace(/\n/g,'<br>')}</h2>${DIS.hero_sub?`<p class="text-sm font-bold mt-2 opacity-80">${e(DIS.hero_sub)}</p>`:''}</div>${DIS.hero_img?`<img src="${imgSlot('hero')}" alt="" class="w-28 h-28 rounded-3xl object-cover shadow-xl rotate-3">`:''}</div>`:'')+(CFG.pausa==='si'?`<div class="${CARD} mt-3 text-center font-bold">⏸️ Los pedidos están pausados por ahora. Vuelve en un rato.</div>`:''),
+    pedidos:MIS.length?`<h3 class="font-black mb-2">Mis pedidos</h3><div class="flex gap-2 overflow-x-auto pb-1">${MIS.map(p=>`<button onclick="track('${p.id}')" class="shrink-0 ${CARD} !p-3 text-left min-w-[150px]"><div class="text-sm font-bold">${e(p.negocios?.emoji||'📦')} ${e(p.negocios?.nombre||'Pedido')}</div>${tag(p.estado)}<div class="text-xs text-slate-500 mt-1">${cup(p.total)}</div></button>`).join('')}</div>`:'',
+    buscar:`<input id="q" value="${e(fq)}" oninput="fq=this.value;lst()" placeholder="🔍 Buscar negocio" class="${INP}"><div class="flex gap-2 overflow-x-auto my-3">${['',...cats].map(c=>`<button data-c="${e(c)}" onclick="fc=this.dataset.c;drawHome()" class="shrink-0 px-4 py-1.5 rounded-full text-sm font-bold ${fc===c?'bg-ink text-white':'bg-white border border-black/10 text-slate-900'}">${e(c)||'Todos'}</button>`).join('')}</div><div id="lst"></div>`
+  };
+  draw(DIS.home_orden.map(k=>sec(P[k])).join('')); lst();
 }
 function lst(){
   const box=document.getElementById('lst'); if(!box) return; const q=fq.toLowerCase();
   const r=NEGS.filter(n=>(!fc||n.categoria===fc)&&n.nombre.toLowerCase().includes(q));
-  box.innerHTML=r.length?r.map(n=>{const ab=n.abierto!==false;return `<button onclick="openNeg('${n.id}')" class="${CARD} w-full flex items-center gap-4 mb-3 text-left active:scale-[.98] ${ab?'':'opacity-60'}"><span class="w-16 h-16 rounded-2xl bg-s flex items-center justify-center text-4xl">${e(n.emoji)}</span><span class="flex-1"><b class="block text-lg leading-tight">${e(n.nombre)}</b><span class="text-slate-500 text-sm">${e(n.categoria)}</span><br><span class="text-xs font-bold ${ab?'text-green-600':'text-red-600'}">● ${ab?'Abierto':'Cerrado'}</span></span><i data-lucide="chevron-right" class="w-5 h-5 text-slate-400"></i></button>`}).join(''):`<div class="text-center text-slate-500 py-8"><div class="text-4xl">🔎</div>No hay negocios para mostrar</div>`;
+  box.innerHTML=r.length?r.map(n=>{const ab=n.abierto!==false;return `<button onclick="openNeg('${n.id}')" class="${CARD} w-full flex items-center gap-4 mb-3 text-left active:scale-[.98] ${ab?'':'opacity-60'}"><span class="w-16 h-16 rounded-2xl bg-s flex items-center justify-center text-4xl">${e(n.emoji)}</span><span class="flex-1"><b class="block text-lg leading-tight">${e(n.nombre)}</b><span class="text-slate-500 text-sm">${e(n.categoria)}</span><br><span class="text-xs font-bold ${ab?'text-green-600':'text-red-600'}">● ${ab?'Abierto':'Cerrado'}</span></span><span class="text-slate-400">${ico('siguiente','w-5 h-5')}</span></button>`}).join(''):`<div class="text-center text-slate-500 py-8"><div class="text-4xl">${ico('vacio_buscar','w-10 h-10')}</div>No hay negocios para mostrar</div>`;
   lucide.createIcons();
 }
 async function openNeg(id){
@@ -206,19 +247,19 @@ const cartTotal=()=>Object.values(cart.items).reduce((s,i)=>s+i.q*i.p.precio,0),
 function chg(pid,d){ const p=prods.find(x=>x.id==pid), it=cart.items[pid]||{p,q:0}; it.q=Math.max(0,it.q+d); it.q?cart.items[pid]=it:delete cart.items[pid]; drawNeg(); }
 function drawNeg(){
   CK.out=false; const cerrado=neg.abierto===false||CFG.pausa==='si';
-  draw(`<button onclick="go('cliente')" class="font-bold mb-3 flex items-center gap-1"><i data-lucide="arrow-left" class="w-4 h-4"></i> Negocios</button>
+  draw(`<button onclick="go('cliente')" class="font-bold mb-3 flex items-center gap-1">${ico('atras','w-4 h-4')} Negocios</button>
   <div class="${CARD} flex items-center gap-4 mb-4"><span class="w-16 h-16 rounded-2xl bg-s flex items-center justify-center text-4xl">${e(neg.emoji)}</span><div><h2 class="text-xl font-black">${e(neg.nombre)}</h2><span class="text-sm text-slate-500">${e(neg.categoria)}</span></div></div>`+
   (cerrado?`<div class="${CARD} mb-3 text-center font-bold text-red-700">Cerrado por ahora: no se pueden hacer pedidos.</div>`:'')+
   (prods.length?prods.map(p=>{const q=cart.items[p.id]?.q||0;return `<div class="${CARD} mb-2 flex items-center gap-3 !p-3">
     ${p.foto?`<img src="${e(p.foto)}" loading="lazy" class="w-20 h-20 rounded-2xl object-cover">`:`<div class="w-20 h-20 rounded-2xl bg-s flex items-center justify-center text-3xl">${e(neg.emoji)}</div>`}
     <div class="flex-1"><b>${e(p.nombre)}</b><div class="font-black text-lg">${cup(p.precio)}</div></div>
     ${cerrado?'':`<div class="flex items-center gap-2">${q?`<button onclick="chg('${p.id}',-1)" class="w-9 h-9 rounded-full bg-black/10 font-bold">−</button><b>${q}</b>`:''}<button onclick="chg('${p.id}',1)" class="w-9 h-9 rounded-full bg-v text-vt font-bold">+</button></div>`}</div>`}).join(''):`<p class="text-slate-500 text-center py-6">Este negocio no tiene productos disponibles ahora.</p>`)+
-  (cartCount()&&!cerrado?`<div class="fixed bottom-[4.5rem] inset-x-0 p-3 z-30"><div class="max-w-xl mx-auto"><button onclick="drawCheckout()" class="${BTN} w-full text-lg">Pedir ${cartCount()} · ${cup(cartTotal())}</button></div></div>`:''));
+  (cartCount()&&!cerrado?`<div class="fixed ${NB()} inset-x-0 p-3 z-30"><div class="max-w-xl mx-auto"><button onclick="drawCheckout()" class="${BTN} w-full text-lg">Pedir ${cartCount()} · ${cup(cartTotal())}</button></div></div>`:''));
 }
 function drawCheckout(){
   CK.out=true; if(!U) return auth('cliente',drawCheckout);
   const km=(CK.lat!=null&&neg.lat!=null)?dist(neg.lat,neg.lng,CK.lat,CK.lng):null, envio=km==null?0:Math.max(Number(CFG.envio_min||0),Math.round(km*Number(CFG.tarifa_km))), sub=cartTotal();
-  draw(`<button onclick="drawNeg()" class="font-bold mb-3 flex items-center gap-1"><i data-lucide="arrow-left" class="w-4 h-4"></i> Volver</button><h2 class="text-xl font-black mb-3">Tu pedido</h2>
+  draw(`<button onclick="drawNeg()" class="font-bold mb-3 flex items-center gap-1">${ico('atras','w-4 h-4')} Volver</button><h2 class="text-xl font-black mb-3">Tu pedido</h2>
   <div class="${CARD} mb-3">${Object.values(cart.items).map(i=>`<div class="flex justify-between"><span>${i.q} × ${e(i.p.nombre)}</span><span>${cup(i.q*i.p.precio)}</span></div>`).join('')}
   <div class="flex justify-between border-t mt-2 pt-2"><span>Productos</span><span>${cup(sub)}</span></div>
   <div class="flex justify-between"><span>Servicio a domicilio${km!=null?` (${km.toFixed(1)} km)`:''}</span><span>${km!=null?cup(envio):'con tu GPS se calcula'}</span></div>
@@ -240,17 +281,17 @@ async function sendOrder(ev,envio,km){
 async function cancelarPed(id){ if(confirm('¿Cancelar este pedido?')&&await upd('pedidos',id,{estado:'cancelado'})) track(id); }
 async function track(id){
   cv='track'; curTrack=id; neg=null; tab='cliente'; unsub();
-  draw(`<button onclick="go('cliente')" class="font-bold mb-3 flex items-center gap-1"><i data-lucide="arrow-left" class="w-4 h-4"></i> Volver al catálogo</button><div id="info"></div><div id="map" class="h-72 rounded-3xl mt-3 border border-black/10 overflow-hidden"></div>`);
+  draw(`<button onclick="go('cliente')" class="font-bold mb-3 flex items-center gap-1">${ico('atras','w-4 h-4')} Volver al catálogo</button><div id="info"></div><div id="map" class="h-72 rounded-3xl mt-3 border border-black/10 overflow-hidden"></div>`);
   M=mk('map'); let locRep=null;
   const load=async()=>{
     const {data:p}=await sb.from('pedidos').select('*, negocios(nombre,emoji,lat,lng)').eq('id',id).maybeSingle();
     const info=document.getElementById('info'); if(!info) return; if(!p) return go('cliente');
-    const steps=[['pendiente','Recibido','📥'],['preparando','Preparando','👨‍🍳'],['en_camino','En camino','🛵'],['entregado','Entregado','✅']];
+    const steps=[['pendiente','Recibido','paso1'],['preparando','Preparando','paso2'],['en_camino','En camino','paso3'],['entregado','Entregado','paso4']];
     const idx=Math.max(0,steps.findIndex(s=>s[0]===(p.estado==='listo'?'preparando':p.estado)));
     info.innerHTML=`<div class="${CARD}"><h2 class="text-lg font-black">${e(p.negocios?.emoji)} ${e(p.negocios?.nombre)}</h2>
     <p class="text-sm text-slate-500 mb-3">${e(p.direccion)}<br>Productos ${cup(p.subtotal)} + envío ${cup(p.envio)} = <b>${cup(p.total)}</b></p>`+
     (['rechazado','cancelado'].includes(p.estado)?`<div class="text-center font-bold text-red-700">${L[p.estado]}</div>`:
-     `<div class="flex justify-between">${steps.map((s,i)=>`<div class="flex-1 text-center"><div class="mx-auto w-11 h-11 rounded-full flex items-center justify-center text-xl ${i<=idx?'bg-v':'bg-black/10'}">${s[2]}</div><div class="text-[11px] mt-1 ${i===idx?'font-bold':'opacity-60'}">${s[1]}</div></div>`).join('')}</div>`+(p.estado==='listo'?`<p class="text-sm text-center text-slate-500 mt-2">Listo para recoger: buscando repartidor.</p>`:''))+
+     `<div class="flex justify-between">${steps.map((s,i)=>`<div class="flex-1 text-center"><div class="mx-auto w-11 h-11 rounded-full flex items-center justify-center text-xl ${i<=idx?'bg-v':'bg-black/10'}">${ico(s[2],'w-6 h-6')}</div><div class="text-[11px] mt-1 ${i===idx?'font-bold':'opacity-60'}">${s[1]}</div></div>`).join('')}</div>`+(p.estado==='listo'?`<p class="text-sm text-center text-slate-500 mt-2">Listo para recoger: buscando repartidor.</p>`:''))+
     (p.estado==='pendiente'?`<button onclick="cancelarPed('${p.id}')" class="${CHIP} w-full mt-3 text-red-700">Cancelar pedido</button>`:'')+`</div>`;
     pt('cli',p.lat,p.lng,'Tú','#2563eb'); pt('neg',p.negocios?.lat,p.negocios?.lng,p.negocios?.nombre||'Negocio','#f59e0b');
     if(p.repartidor_id&&p.estado==='en_camino'){
@@ -288,7 +329,7 @@ async function vNegocio(){
     draw(head+(data?.length?data.map(p=>`<div class="${CARD} mb-3"><div class="flex justify-between items-center"><b>${e(p.cliente_nombre)}</b>${tag(p.estado)}</div>
       <div class="text-sm text-slate-600 my-2">${p.items.map(i=>`${i.q} × ${e(i.n)}`).join('<br>')}${p.nota?`<br><i>📝 ${e(p.nota)}</i>`:''}</div><div class="font-black mb-2">${cup(p.subtotal)}</div>
       ${p.estado==='pendiente'?`<div class="flex gap-2"><button onclick="setEst('${p.id}','preparando')" class="${BTN} flex-1">Aceptar</button><button onclick="setEst('${p.id}','rechazado')" class="flex-1 rounded-2xl border-2 border-red-300 text-red-700 font-bold">Rechazar</button></div>`:''}
-      ${p.estado==='preparando'?`<button onclick="setEst('${p.id}','listo')" class="${BTN} w-full">Marcar listo para recoger</button>`:''}</div>`).join(''):`<div class="text-center text-slate-500 py-8"><div class="text-4xl">📭</div>Todavía no hay pedidos. Aparecerán aquí al instante.</div>`));
+      ${p.estado==='preparando'?`<button onclick="setEst('${p.id}','listo')" class="${BTN} w-full">Marcar listo para recoger</button>`:''}</div>`).join(''):`<div class="text-center text-slate-500 py-8"><div class="text-4xl">${ico('vacio_pedidos','w-10 h-10')}</div>Todavía no hay pedidos. Aparecerán aquí al instante.</div>`));
   };
   listen('np','pedidos',`negocio_id=eq.${n.id}`,p=>{ if(p.eventType==='INSERT') ding(); load(); }); load();
 }
@@ -298,11 +339,11 @@ async function togProd(id,v){ if(await upd('productos',id,{disponible:v})) rende
 async function editPrecio(id,old){ const v=prompt('Nuevo precio (CUP)',old); if(v!==null&&v!==''&&!isNaN(+v)&&await upd('productos',id,{precio:+v})) render(); }
 async function delProd(id){ if(!confirm('¿Borrar este producto?')) return; const {error}=await sb.from('productos').delete().eq('id',id); if(error) toast(error.message); render(); }
 function setLoc(id){ gps(async c=>{ if(await upd('negocios',id,{lat:c.latitude,lng:c.longitude})){ toast('Ubicación guardada'); render(); } }); }
-async function subir(file){ // comprime a 700 px / JPEG 70 % para conexiones lentas
-  const img=await createImageBitmap(file), s=Math.min(1,700/Math.max(img.width,img.height)), c=document.createElement('canvas');
-  c.width=img.width*s; c.height=img.height*s; c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-  const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.7)), n=`${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
-  const {error}=await sb.storage.from('fotos').upload(n,b,{contentType:'image/jpeg'}); if(error) throw error;
+async function subir(file,max=700,keep=false){ // comprime para conexiones lentas; keep=true conserva PNG (transparencia)
+  const png=keep&&file.type==='image/png', img=await createImageBitmap(file), s=Math.min(1,max/Math.max(img.width,img.height)), c=document.createElement('canvas');
+  c.width=Math.round(img.width*s); c.height=Math.round(img.height*s); c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  const b=await new Promise(r=>c.toBlob(r,png?'image/png':'image/jpeg',.72)), n=`${Date.now()}_${Math.random().toString(36).slice(2)}.${png?'png':'jpg'}`;
+  const {error}=await sb.storage.from('fotos').upload(n,b,{contentType:png?'image/png':'image/jpeg'}); if(error) throw error;
   return sb.storage.from('fotos').getPublicUrl(n).data.publicUrl;
 }
 async function addProd(ev,nid){
@@ -333,7 +374,7 @@ async function vRepartidor(){
     } else {
       shownAct=null; stopGPS(); if(M){ try{M.map.remove()}catch{} M=null; }
       const {data}=await sb.from('pedidos').select('*, negocios(nombre)').eq('estado','listo').is('repartidor_id',null).order('creado');
-      draw(top+`<h3 class="font-black mb-2">Listos para recoger</h3>`+(data?.length?data.map(p=>`<div class="${CARD} mb-3"><b>${e(p.negocios?.nombre)}</b> → ${e(p.direccion)}<div class="text-sm text-slate-500 mb-2">Total ${cup(p.total)} · envío ${cup(p.envio)}${p.distancia_km!=null?` · ${p.distancia_km} km`:''}</div><button onclick="tomar('${p.id}',${saldo})" class="${BTN} w-full">Tomar pedido</button></div>`).join(''):`<div class="text-center text-slate-500 py-6"><div class="text-4xl">🛵</div>No hay pedidos listos ahora. Se actualiza solo.</div>`));
+      draw(top+`<h3 class="font-black mb-2">Listos para recoger</h3>`+(data?.length?data.map(p=>`<div class="${CARD} mb-3"><b>${e(p.negocios?.nombre)}</b> → ${e(p.direccion)}<div class="text-sm text-slate-500 mb-2">Total ${cup(p.total)} · envío ${cup(p.envio)}${p.distancia_km!=null?` · ${p.distancia_km} km`:''}</div><button onclick="tomar('${p.id}',${saldo})" class="${BTN} w-full">Tomar pedido</button></div>`).join(''):`<div class="text-center text-slate-500 py-6"><div class="text-4xl">${ico('vacio_reparto','w-10 h-10')}</div>No hay pedidos listos ahora. Se actualiza solo.</div>`));
     }
   };
   listen('rp','pedidos',null,p=>{ if(p.new?.estado==='listo'&&p.old?.estado!=='listo') ding(); load(); }); listen('ru','usuarios',`id=eq.${me1}`,load); load();
@@ -384,8 +425,8 @@ function admin(){
   if(p!==ADMIN_PASS) return toast('Contraseña incorrecta');
   ADM=true; tab='admin'; unsub(); render();
 }
-const AS=['Resumen','Usuarios','Negocios','Productos','Pedidos','Recargas','Soporte','Ajustes','Actualizar'];
-const TB={Resumen:['pedidos','usuarios','recargas','soporte'],Usuarios:['usuarios'],Negocios:['negocios'],Productos:['productos'],Pedidos:['pedidos'],Recargas:['recargas'],Soporte:['soporte'],Ajustes:[],Actualizar:[]};
+const AS=['Resumen','Usuarios','Negocios','Productos','Pedidos','Recargas','Soporte','Diseño','Ajustes','Actualizar'];
+const TB={Resumen:['pedidos','usuarios','recargas','soporte'],Usuarios:['usuarios'],Negocios:['negocios'],Productos:['productos'],Pedidos:['pedidos'],Recargas:['recargas'],Soporte:['soporte'],Ajustes:[],Actualizar:[],Diseño:[]};
 const online=id=>PR[id]&&Date.now()-new Date(PR[id])<75000;
 const dotH=id=>`<span data-dot="${id}" class="inline-block w-3 h-3 rounded-full ${online(id)?'bg-green-500':'bg-slate-400'}"></span>`;
 async function loadPres(){ const {data}=await sb.from('presencia').select('*'); PR={}; (data||[]).forEach(r=>PR[r.usuario_id]=r.ultimo_visto); }
@@ -396,7 +437,7 @@ async function lista(t,fmt,acts=()=>'',flt=()=>true){
 const chipsH=(arr,cur,fn)=>`<div class="flex gap-2 overflow-x-auto mb-3">${arr.map(([k,n])=>`<button onclick="${fn}='${k}';vAdmin()" class="shrink-0 px-3 py-1.5 rounded-full text-sm font-bold ${cur===k?'bg-ink text-white':'bg-white border border-black/10 text-slate-900'}">${n}</button>`).join('')}</div>`;
 async function vAdmin(){
   unsub(); (TB[asec]||[]).forEach(t=>listen('a',t,null,()=>{ if(!editing&&tab==='admin'){ clearTimeout(admTm); admTm=setTimeout(vAdmin,700); } }));
-  await loadPres(); let b='';
+  await loadPres(); let b=''; if(asec!=='Diseño') DW=null; else if(!DW) DW=clone(DIS);
   if(asec==='Resumen'){
     const hoy=new Date(); hoy.setHours(0,0,0,0);
     const [a,u,r,s,x]=await Promise.all([sb.from('pedidos').select('estado,total,creado'),sb.from('usuarios').select('id,aprobado'),sb.from('recargas').select('id').eq('estado','pendiente'),sb.from('soporte').select('id').eq('estado','abierto'),sb.from('ubicaciones').select('repartidor_id').gte('actualizado',new Date(Date.now()-120000).toISOString())]);
@@ -430,13 +471,22 @@ async function vAdmin(){
     <label class="text-sm font-semibold">Pausar pedidos<select name="pausa" class="${INP}"><option value="no" ${CFG.pausa!=='si'?'selected':''}>No</option><option value="si" ${CFG.pausa==='si'?'selected':''}>Sí, pausar todo</option></select></label>
     <label class="text-sm font-semibold">Tema de colores<select name="tema" class="${INP}">${Object.keys(TEMAS).map(k=>`<option ${k===CFG.tema?'selected':''}>${k}</option>`).join('')}</select></label>
     <button class="${BTN} w-full">Guardar ajustes</button></form>`;
+  if(asec==='Diseño') b=disH();
   if(asec==='Actualizar'){
     const g=JSON.parse(localStorage.voyya_gh||'{}'), ref=new URL(SUPABASE_URL).hostname.split('.')[0];
-    b=`<div class="${CARD} mb-4 space-y-2"><h3 class="font-black">🚀 Actualizar la página</h3><p class="text-xs text-slate-500">Versión instalada: ${VERSION}. Elige el nuevo index.html y se publica en tu GitHub Pages (tarda 1–2 min en verse).</p>
-    <form onsubmit="subirPagina(event)" class="space-y-2"><input name="repo" required placeholder="usuario/repositorio" value="${e(g.repo||'')}" class="${INP}"><input name="tk" required type="password" placeholder="Token de GitHub" value="${e(g.tk||'')}" class="${INP}"><input name="file" required type="file" accept=".html" class="text-sm w-full"><button class="${BTN} w-full">Publicar actualización</button></form>
-    <details class="text-xs text-slate-500"><summary class="font-bold">¿Cómo saco el token?</summary>GitHub → Settings → Developer settings → Fine-grained tokens → Generate new token. Elige solo tu repositorio y en Permisos pon Contents: Read and write. El token se guarda solo en este teléfono.</details></div>
-    <div class="${CARD} space-y-2"><h3 class="font-black">🗄️ Base de datos (SQL)</h3><p class="text-xs text-slate-500">Por seguridad la página no ejecuta SQL por sí sola. Aquí está el SQL actual: cópialo y pégalo en Supabase. También puedes cargar un archivo .sql nuevo.</p>
-    <textarea id="sqlbox" rows="8" class="${INP} font-mono text-xs">${e(SQL_ACTUAL)}</textarea><input type="file" accept=".sql,.txt" onchange="cargarSql(this)" class="text-sm w-full">
+    b=`<div class="${CARD} mb-4 space-y-3"><h3 class="font-black">🚀 Actualizar la página</h3><p class="text-xs text-slate-500">Versión instalada: ${VERSION}</p>
+    <form id="ghf" onsubmit="return false" class="space-y-2"><input name="repo" placeholder="usuario/repositorio" value="${e(g.repo||'')}" autocomplete="off" class="${INP}"><input name="tk" type="password" placeholder="Token de GitHub" value="${e(g.tk||'')}" autocomplete="off" class="${INP}">
+    <button type="button" onclick="probarGH()" class="${BTN2} w-full">🔌 Probar conexión</button></form>
+    <div id="ghlog" class="text-sm space-y-1"></div>
+    <button id="ghsave" type="button" onclick="guardarGH()" class="${BTN} w-full hidden">💾 Guardar configuración</button>
+    <p id="ghst" class="text-xs ${g.ok?'text-green-700 font-bold':'text-slate-500'}">${g.ok?'✅ Configuración guardada: '+e(g.repo):'Aún no hay configuración guardada.'}</p>
+    <hr class="border-black/10">
+    <form id="pubf" onsubmit="subirPagina(event)" class="space-y-2"><input name="file" required type="file" class="text-sm w-full"><button class="${BTN} w-full" ${g.ok?'':'disabled'}>Publicar actualización</button></form>
+    <div id="publog" class="text-sm space-y-1"></div>
+    <details class="text-xs text-slate-500"><summary class="font-bold">¿Cómo saco el token?</summary>GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token. En "Repository access" elige solo tu repositorio y en Permisos pon Contents: Read and write. El token se guarda solo en este teléfono.</details></div>
+    <div class="${CARD} mb-4 space-y-2"><h3 class="font-black">🗄️ Base de datos</h3><button type="button" onclick="probarDB()" class="${BTN2} w-full">🔌 Probar conexión con la base de datos</button><div id="dblog" class="text-sm space-y-1"></div></div>
+    <div class="${CARD} space-y-2"><h3 class="font-black">📄 SQL</h3><p class="text-xs text-slate-500">Por seguridad la página no ejecuta SQL por sí sola. Copia el SQL y pégalo en Supabase, o carga un archivo .sql nuevo.</p>
+    <textarea id="sqlbox" rows="8" class="${INP} font-mono text-xs">${e(SQL_ACTUAL)}</textarea><input type="file" onchange="cargarSql(this)" class="text-sm w-full">
     <div class="flex gap-2"><button onclick="copySql()" class="${BTN} flex-1">Copiar SQL</button><a target="_blank" rel="noopener" href="https://supabase.com/dashboard/project/${ref}/sql/new" class="${BTN2} flex-1 text-center">Abrir Supabase</a></div></div>`;
   }
   draw(`<div class="flex justify-between items-center mb-3"><h2 class="text-xl font-black">🛡️ Panel de administrador</h2><button onclick="ADM=false;go('cliente')" class="text-sm underline text-slate-500">Cerrar</button></div>
@@ -471,25 +521,135 @@ async function resp(id){ const t=prompt('Tu respuesta'); if(t&&await upd('soport
 async function saveCfg(ev){ ev.preventDefault(); const {error}=await sb.from('config').upsert(Object.entries(fd(ev.target)).map(([clave,valor])=>({clave,valor}))); if(error) return toast(error.message); await loadCfg(); toast('Guardado'); }
 function cargarSql(i){ i.files[0]?.text().then(t=>{ document.getElementById('sqlbox').value=t; toast('SQL cargado'); }); }
 function copySql(){ const t=document.getElementById('sqlbox'); (navigator.clipboard?navigator.clipboard.writeText(t.value):Promise.reject()).then(()=>toast('SQL copiado: pégalo en Supabase'),()=>{ t.select(); document.execCommand('copy'); toast('SQL copiado'); }); }
-async function subirPagina(ev){
-  ev.preventDefault(); const f=ev.target, b=f.querySelector('button'), repo=f.repo.value.trim(), tk=f.tk.value.trim(), file=f.file.files[0];
-  const txt=await file.text(); if(!txt.includes('VoyYa')&&!confirm('Este archivo no parece ser VoyYa. ¿Publicar igual?')) return;
-  b.disabled=true; b.textContent='Publicando…'; localStorage.voyya_gh=JSON.stringify({repo,tk});
+/* ---- Diseño: editor ---- */
+function disH(){
+  const D=DW, t=TEMAS[CFG.tema]||TEMAS.moto, lab='text-sm font-semibold block', summ=x=>`<summary class="font-black cursor-pointer">${x}</summary>`;
+  const ck=(n,v,x)=>`<label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" name="${n}" ${v?'checked':''} class="w-5 h-5"> ${x}</label>`;
+  const sel=(n,v,o)=>`<select name="${n}" class="${INP}">${o.map(a=>`<option value="${a[0]}" ${a[0]===v?'selected':''}>${a[1]}</option>`).join('')}</select>`;
+  const col=(k,i,x)=>`<label class="flex items-center justify-between text-sm font-semibold">${x}<input type="color" name="c_${k}" value="${D.col[k]||t[i]}" class="w-14 h-10 rounded"></label>`;
+  const ord=(arr,key,nm)=>arr.map((k,i)=>`<div class="flex items-center gap-2 mb-2"><button type="button" onclick="mover('${key}',${i},-1)" class="${CHIP}">↑</button><button type="button" onclick="mover('${key}',${i},1)" class="${CHIP}">↓</button><div class="flex-1">${nm(k)}</div></div>`).join('');
+  const up=k=>`<label class="${CHIP} cursor-pointer shrink-0">⬆ Subir<input type="file" accept="image/*" class="hidden" onchange="subirIco('${k}',this)"></label>`;
+  return `<form id="df" onsubmit="saveDis(event)" class="space-y-3">
+  <details open class="${CARD}">${summ('✏️ Textos del inicio')}<div class="space-y-2 mt-3">
+    <label class="${lab}">Título de la pestaña del navegador<input name="titulo" value="${e(D.titulo)}" class="${INP}"></label>
+    ${ck('hero_on',D.hero_on,'Mostrar el banner de inicio')}${ck('hero_img',D.hero_img,'Mostrar la imagen del banner')}
+    <label class="${lab}">Título del banner (Enter = salto de línea)<textarea name="hero_titulo" rows="2" class="${INP}">${e(D.hero_titulo)}</textarea></label>
+    <label class="${lab}">Subtítulo (vacío = no se muestra)<input name="hero_sub" value="${e(D.hero_sub)}" class="${INP}"></label></div></details>
+  <details class="${CARD}">${summ('🎨 Colores y fondo')}<div class="space-y-2 mt-3">
+    ${col('v',0,'Botones principales')}${col('vt',1,'Texto de los botones')}${col('hd',5,'Cabecera y menú')}${col('bg',4,'Fondo de la página')}
+    <button type="button" onclick="readDF();DW.col={v:'',vt:'',hd:'',bg:''};redrawDis()" class="${CHIP}">Volver a los colores del tema</button>
+    <div class="flex items-center gap-2 flex-wrap"><label class="${CHIP} cursor-pointer">📷 Imagen de fondo<input type="file" accept="image/*" class="hidden" onchange="subirFondo(this)"></label>${D.fondo_img?`<img src="${e(D.fondo_img)}" class="w-12 h-12 rounded-lg object-cover"><button type="button" onclick="readDF();DW.fondo_img='';redrawDis()" class="${CHIP} text-red-700">Quitar</button>`:''}</div></div></details>
+  <details class="${CARD}">${summ('🔘 Forma de botones y tarjetas')}<div class="space-y-2 mt-3">
+    <label class="${lab}">Botones${sel('rb',D.rb,[['cuadrado','Cuadrados'],['suave','Suaves'],['redondo','Redondeados'],['pildora','Píldora']])}</label>
+    <label class="${lab}">Tarjetas${sel('rc',D.rc,[['cuadrado','Cuadradas'],['suave','Suaves'],['redondo','Redondeadas']])}</label></div></details>
+  <details class="${CARD}">${summ('📱 Menú de navegación')}<div class="mt-3">
+    <label class="${lab} mb-3">Posición${sel('nav_pos',D.nav_pos,[['abajo','Abajo'],['arriba','Arriba']])}</label>
+    <p class="text-xs text-slate-500 mb-2">Mueve cada botón con las flechas y cambia su nombre:</p>
+    ${ord(D.nav_orden,'nav',k=>`<input name="nt_${k}" value="${e(D.nav_txt[k])}" class="${INP} !py-1.5">`)}
+    <label class="${lab}">Nombre del botón de administrador<input name="nt_admin" value="${e(D.nav_txt.admin)}" class="${INP} !py-1.5"></label></div></details>
+  <details class="${CARD}">${summ('🏠 Orden de la pantalla de inicio')}<div class="mt-3">${ord(D.home_orden,'home',k=>({hero:'Banner',pedidos:'Mis pedidos',buscar:'Buscador y negocios'}[k]))}</div></details>
+  <details class="${CARD}">${summ('🧩 Iconos e imágenes')}<div class="mt-3">
+    <p class="text-xs text-slate-500 mb-2">En cada icono escribe el nombre de uno (ej. <b>home</b>, <b>truck</b>), un emoji, o sube tu propia imagen. <a href="https://lucide.dev/icons" target="_blank" rel="noopener" class="underline">Ver iconos disponibles</a></p>
+    <datalist id="ic">${['shopping-bag','shopping-cart','store','bike','truck','package','shield','message-circle','arrow-left','chevron-right','home','map-pin','navigation','user','phone','star','heart','flame','pizza','coffee','utensils','gift','bell','settings','smile','zap','clock','send','search'].map(n=>`<option value="${n}">`).join('')}</datalist>
+    ${ICOS.map(a=>`<div class="flex items-center gap-2 mb-2"><div class="w-10 h-10 rounded-xl bg-hd text-white flex items-center justify-center shrink-0">${ico(a[0],'w-5 h-5',D)}</div><div class="flex-1"><div class="text-xs text-slate-500">${a[1]}</div><input name="i_${a[0]}" list="ic" value="${e(D.ico[a[0]]||'')}" placeholder="${e(a[2])}" class="${INP} !py-1.5"></div>${up(a[0])}</div>`).join('')}
+    ${IMGS.map(a=>`<div class="flex items-center gap-2 mb-2"><img src="${e(imgSlot(a[0],D))}" class="w-10 h-10 rounded-full object-cover shrink-0"><div class="flex-1"><div class="text-xs text-slate-500">${a[1]}</div><input name="i_${a[0]}" value="${e(D.ico[a[0]]||'')}" placeholder="(la tuya por defecto)" class="${INP} !py-1.5"></div>${up(a[0])}</div>`).join('')}</div></details>
+  <div class="grid grid-cols-2 gap-2"><button type="button" onclick="previewDis()" class="${BTN2}">👁 Ver cambios</button><button class="${BTN}">💾 Guardar diseño</button></div>
+  <button type="button" onclick="resetDis()" class="${CHIP} w-full text-red-700">Restablecer todo el diseño</button></form>`;
+}
+function redrawDis(){ const a=document.getElementById('adm'); if(a&&DW){ a.innerHTML=disH(); lucide.createIcons(); } }
+function readDF(){
+  const f=document.getElementById('df'); if(!f||!DW) return; const x=fd(f), t=TEMAS[CFG.tema]||TEMAS.moto;
+  DW.titulo=x.titulo||'VoyYa'; DW.hero_on=!!x.hero_on; DW.hero_img=!!x.hero_img; DW.hero_titulo=x.hero_titulo||''; DW.hero_sub=x.hero_sub||'';
+  [['v',0],['vt',1],['hd',5],['bg',4]].forEach(a=>{ const v=(x['c_'+a[0]]||'').toUpperCase(); DW.col[a[0]]=(v&&v!==t[a[1]].toUpperCase())?v:''; });
+  DW.rb=x.rb; DW.rc=x.rc; DW.nav_pos=x.nav_pos; ['cliente','negocio','repartidor','admin'].forEach(k=>{ DW.nav_txt[k]=(x['nt_'+k]||'').trim()||DIS0.nav_txt[k]; });
+  [...ICOS,...IMGS].forEach(a=>{ let v=(x['i_'+a[0]]||'').trim(); if(/^[A-Za-z][A-Za-z0-9-]*$/.test(v)) v=v.toLowerCase(); if(v) DW.ico[a[0]]=v; else delete DW.ico[a[0]]; });
+}
+function mover(key,i,d){ readDF(); const arr=key==='nav'?DW.nav_orden:DW.home_orden, j=i+d; if(j<0||j>=arr.length) return; [arr[i],arr[j]]=[arr[j],arr[i]]; redrawDis(); }
+async function subirIco(k,inp){
+  const file=inp.files[0]; if(!file) return; readDF(); toast('Subiendo imagen…');
+  try{ DW.ico[k]=await subir(file,IMGS.some(a=>a[0]===k)?600:160,true); redrawDis(); toast('Imagen subida: pulsa Guardar diseño'); }catch(er){ toast('No se pudo subir: '+(er.message||er)); }
+}
+async function subirFondo(inp){
+  const file=inp.files[0]; if(!file) return; readDF(); toast('Subiendo fondo…');
+  try{ DW.fondo_img=await subir(file,1080); redrawDis(); toast('Fondo subido: pulsa Guardar diseño'); }catch(er){ toast('No se pudo subir: '+(er.message||er)); }
+}
+function previewDis(){ readDF(); DIS=mergeD(DW); applyDiseno(); renderNav(); head(); toast('Vista previa (aún sin guardar)'); }
+async function saveDis(ev){
+  ev.preventDefault(); readDF(); const {error}=await sb.from('config').upsert({clave:'diseno',valor:JSON.stringify(DW)}); if(error) return toast('Error: '+error.message);
+  DIS=mergeD(DW); applyDiseno(); renderNav(); head(); DW=null; toast('Diseño guardado ✔'); vAdmin();
+}
+async function resetDis(){
+  if(!confirm('¿Volver al diseño original?')) return; await sb.from('config').delete().eq('clave','diseno'); CFG.diseno=''; DIS=mergeD({}); applyDiseno(); renderNav(); head(); DW=null; toast('Diseño restablecido'); vAdmin();
+}
+
+/* ---- Actualizar página: probar conexión, guardar y publicar ---- */
+const logC=id=>{ const b=document.getElementById(id); if(b) b.innerHTML=''; };
+const logA=(id,ic,x)=>{ const b=document.getElementById(id); if(b) b.insertAdjacentHTML('beforeend',`<div>${ic} ${e(x)}</div>`); };
+const ghErr=(s,m)=>({401:'el token no es válido o ya venció',403:'el token no tiene permiso (activa Contents: Read and write)',404:'no se encontró: revisa usuario/repositorio y que el token tenga acceso a ese repositorio'}[s]||m||('error '+s));
+async function gh(url,tk,opt={}){
+  let r; try{ r=await fetch(url,{...opt,headers:{Authorization:'Bearer '+tk,Accept:'application/vnd.github+json',...(opt.body?{'Content-Type':'application/json'}:{})}}); }catch{ throw new Error('no hay conexión con GitHub desde esta red'); }
+  const j=await r.json().catch(()=>({})); if(!r.ok){ const er=new Error(ghErr(r.status,j.message)); er.status=r.status; throw er; } return j;
+}
+async function probarGH(){
+  const f=document.getElementById('ghf'), tk=f.tk.value.trim(), repo=f.repo.value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$/,'').replace(/\/+$/,'');
+  GHT=null; logC('ghlog'); document.getElementById('ghsave').classList.add('hidden');
+  if(!/^[\w.-]+\/[\w.-]+$/.test(repo)) return logA('ghlog','❌','Escribe el repositorio como usuario/repositorio (ejemplo: miusuario/voyya)');
+  if(!tk) return logA('ghlog','❌','Falta el token de GitHub');
+  logA('ghlog','⏳','Conectando con GitHub…');
   try{
-    const h={Authorization:'Bearer '+tk,Accept:'application/vnd.github+json'}, u=`https://api.github.com/repos/${repo}/contents/index.html`;
-    const cur=await fetch(u,{headers:h}); const sha=cur.ok?(await cur.json()).sha:undefined;
+    const u=await gh('https://api.github.com/user',tk); logA('ghlog','✅','Token válido (usuario '+u.login+')');
+    const r=await gh('https://api.github.com/repos/'+repo,tk); logA('ghlog','✅','Repositorio encontrado · rama principal: '+r.default_branch);
+    if(r.permissions&&r.permissions.push===false) throw new Error('el token solo puede leer: activa Contents: Read and write');
+    logA('ghlog','✅','Permiso para escribir');
+    try{ const c=await gh('https://api.github.com/repos/'+repo+'/contents/index.html',tk); logA('ghlog','✅','index.html encontrado ('+Math.round(c.size/1024)+' KB)'); }catch{ logA('ghlog','⚠️','No hay index.html en el repositorio: se creará al publicar'); }
+    try{ const p=await gh('https://api.github.com/repos/'+repo+'/pages',tk); logA('ghlog','✅','GitHub Pages activo: '+p.html_url); }catch{ logA('ghlog','⚠️','No pude confirmar GitHub Pages (revisa Settings → Pages)'); }
+    GHT={repo,tk,branch:r.default_branch}; logA('ghlog','🎉','Conexión correcta: ya puedes guardar la configuración'); document.getElementById('ghsave').classList.remove('hidden');
+  }catch(er){ logA('ghlog','❌','Error: '+er.message); }
+}
+function guardarGH(){
+  if(!GHT) return; localStorage.voyya_gh=JSON.stringify({repo:GHT.repo,tk:GHT.tk,ok:true});
+  const s=document.getElementById('ghst'); s.textContent='✅ Configuración guardada: '+GHT.repo; s.className='text-xs text-green-700 font-bold';
+  document.querySelector('#pubf button').disabled=false; document.getElementById('ghsave').classList.add('hidden'); toast('Configuración guardada');
+}
+async function esperarPagina(len){
+  const url=location.origin+location.pathname;
+  for(let i=1;i<=20;i++){ await new Promise(r=>setTimeout(r,6000)); try{ const x=await (await fetch(url+'?nc='+Date.now(),{cache:'no-store'})).text(); if(x.length===len) return true; }catch{} }
+  return false;
+}
+async function subirPagina(ev){
+  ev.preventDefault(); const g=JSON.parse(localStorage.voyya_gh||'null'), file=ev.target.file.files[0], b=ev.target.querySelector('button'); logC('publog');
+  if(!g||!g.ok) return logA('publog','❌','Primero prueba y guarda la conexión.'); if(!file) return logA('publog','❌','Elige el archivo index.html');
+  const txt=await file.text(); if(!txt.includes('VoyYa')&&!confirm('Este archivo no parece ser VoyYa. ¿Publicar igual?')) return;
+  b.disabled=true;
+  try{
+    logA('publog','✅','Archivo leído ('+Math.round(file.size/1024)+' KB)');
+    const api='https://api.github.com/repos/'+g.repo+'/contents/index.html'; let sha;
+    try{ sha=(await gh(api,g.tk)).sha; logA('publog','✅','Versión actual encontrada'); }catch(er){ if(er.status!==404) throw er; }
     const u8=new Uint8Array(await file.arrayBuffer()); let bin=''; for(let i=0;i<u8.length;i+=8192) bin+=String.fromCharCode.apply(null,u8.subarray(i,i+8192));
-    const r=await fetch(u,{method:'PUT',headers:h,body:JSON.stringify({message:'Actualización desde el panel de VoyYa',content:btoa(bin),sha})});
-    if(!r.ok) throw new Error((await r.json()).message||r.status);
-    toast('✅ Publicado. Se verá en 1–2 minutos: recarga la página.');
-  }catch(er){ toast('No se pudo publicar: '+er.message); }
-  b.disabled=false; b.textContent='Publicar actualización';
+    const r=await gh(api,g.tk,{method:'PUT',body:JSON.stringify({message:'Actualización desde el panel de VoyYa',content:btoa(bin),sha})});
+    logA('publog','✅','Subido a GitHub (commit '+r.commit.sha.slice(0,7)+')');
+    logA('publog','⏳','Esperando a que GitHub Pages la publique (1–2 min)…');
+    const ok=await esperarPagina(txt.length);
+    logA('publog',ok?'🎉':'⚠️',ok?'La nueva versión ya está en línea. Recarga la página.':'Aún no se ve; puede tardar unos minutos más. Recarga luego.');
+  }catch(er){ logA('publog','❌','Error: '+er.message); }
+  b.disabled=false;
+}
+async function probarDB(){
+  logC('dblog'); logA('dblog','⏳','Probando…'); let ok=true;
+  for(const tb of ['usuarios','negocios','productos','pedidos','ubicaciones','recargas','soporte','config','presencia']){
+    const {count,error}=await sb.from(tb).select('*',{count:'exact',head:true}); if(error){ ok=false; logA('dblog','❌',tb+': '+error.message); } else logA('dblog','✅',tb+' ('+count+' filas)');
+  }
+  const st=await sb.storage.from('fotos').list('',{limit:1}); if(st.error){ ok=false; logA('dblog','❌','Fotos: '+st.error.message); } else logA('dblog','✅','Almacén de fotos listo');
+  const rt=await new Promise(res=>{ const ch=sb.channel('t'+Math.random()), tm=setTimeout(()=>{ sb.removeChannel(ch); res(false); },6000);
+    ch.subscribe(s=>{ if(s==='SUBSCRIBED'){ clearTimeout(tm); sb.removeChannel(ch); res(true); } else if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'){ clearTimeout(tm); sb.removeChannel(ch); res(false); } }); });
+  if(!rt) ok=false; logA('dblog',rt?'✅':'❌','Tiempo real '+(rt?'conectado':'sin conexión'));
+  logA('dblog',ok?'🎉':'⚠️',ok?'Todo conectado y funcionando':'Hay problemas: si falta alguna tabla, ejecuta el SQL.');
 }
 
 /* ---------- Arranque ---------- */
 const L2 = window.L; // Leaflet (la constante L de arriba son los textos de estado)
 (async()=>{
-  try{ await loadCfg(); await render(); hb(); }catch(er){ fail(er); }
+  try{ await loadCfg(); await render(); booted=true; hb(); }catch(er){ fail(er); }
   setInterval(hb,30000);
   setInterval(async()=>{ if(tab==='admin'&&!editing){ if(asec==='Resumen') vAdmin(); else if(asec==='Usuarios'){ await loadPres(); document.querySelectorAll('[data-dot]').forEach(d=>{ d.className='inline-block w-3 h-3 rounded-full '+(online(d.dataset.dot)?'bg-green-500':'bg-slate-400'); }); } } },15000);
   setTimeout(()=>{ const s=document.getElementById('splash'); s.style.opacity=0; setTimeout(()=>s.remove(),450); },900);
