@@ -32,7 +32,7 @@
   <p class="mt-3 text-sm font-semibold text-black/60">Cargando…</p>
 </div>
 
-<script>window.IMG0=document.getElementById('splashimg').src;try{var _s=localStorage.voyya_splash;if(_s){var _i=document.getElementById('splashimg');_i.onerror=function(){this.onerror=null;this.src=window.IMG0};_i.src=_s}}catch(e){}</script>
+<script>window.IMG0=document.getElementById('splashimg').src;try{var _s=localStorage.voyya_splash;if(_s){var _i=document.getElementById('splashimg');if(/\.(mp4|webm|mov)(\?|$)/i.test(_s)){var v=document.createElement('video');v.src=_s;v.autoplay=true;v.muted=true;v.loop=true;v.playsInline=true;v.className=_i.className;v.style.cssText=_i.style.cssText;_i.replaceWith(v);v.play&&v.play().catch(function(){})}else{_i.onerror=function(){this.onerror=null;this.src=window.IMG0};_i.src=_s}}}catch(e){}</script>
 <header id="hdr" class="sticky top-0 z-20 bg-hd text-white shadow-lg" style="padding-top:env(safe-area-inset-top)">
   <div class="max-w-xl mx-auto px-4 py-2.5 flex items-center justify-between">
     <h1 class="flex items-center gap-2 text-2xl font-black tracking-tight"><img id="logo" alt="" class="w-9 h-9 rounded-full object-cover border-2 border-v">Voy<span class="text-v -ml-1.5">Ya</span></h1>
@@ -51,8 +51,8 @@
 const SUPABASE_URL = 'https://efxosdwucdkvveymvuxq.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_x5rb1Xpe8-GM074IfvNRqg_tvWEm1RA';
 const ADMIN_PASS = '93091414047';
-const VERSION = '3.1';
-const SQL_ACTUAL = "-- VoyYa v3 · SEGURO DE EJECUTAR VARIAS VECES: no borra ningún dato.\n-- Pégalo completo en Supabase > SQL Editor > New query > Run.\n\ncreate table if not exists usuarios (\n  id uuid primary key default gen_random_uuid(),\n  rol text not null check (rol in ('cliente','negocio','repartidor')),\n  nombre text not null, apellido text not null,\n  telefono text not null unique, tarjeta text not null, clave text not null,\n  saldo numeric default 0, baneado boolean default false,\n  ultimo_visto timestamptz, creado timestamptz default now()\n);\ncreate table if not exists negocios (\n  id uuid primary key default gen_random_uuid(),\n  dueno_id uuid references usuarios(id) on delete cascade,\n  nombre text not null, categoria text default 'Tienda', emoji text default '🏪',\n  lat double precision, lng double precision,\n  activo boolean default false, abierto boolean default true,\n  creado timestamptz default now()\n);\ncreate table if not exists productos (\n  id uuid primary key default gen_random_uuid(),\n  negocio_id uuid references negocios(id) on delete cascade,\n  nombre text not null, precio numeric not null, foto text,\n  disponible boolean default true, creado timestamptz default now()\n);\ncreate table if not exists pedidos (\n  id uuid primary key default gen_random_uuid(),\n  cliente_id uuid references usuarios(id) on delete set null,\n  negocio_id uuid references negocios(id) on delete set null,\n  repartidor_id uuid references usuarios(id) on delete set null,\n  cliente_nombre text, cliente_tel text, direccion text, nota text,\n  lat double precision, lng double precision,\n  items jsonb not null, subtotal numeric default 0, envio numeric default 0,\n  distancia_km numeric, total numeric not null,\n  estado text not null default 'pendiente',\n  creado timestamptz default now()\n);\ncreate table if not exists ubicaciones (\n  repartidor_id uuid primary key references usuarios(id) on delete cascade,\n  pedido_id uuid, lat double precision not null, lng double precision not null,\n  actualizado timestamptz default now()\n);\ncreate table if not exists recargas (\n  id uuid primary key default gen_random_uuid(),\n  repartidor_id uuid references usuarios(id) on delete cascade,\n  nombre text, telefono text, monto numeric not null,\n  estado text default 'pendiente', creado timestamptz default now()\n);\ncreate table if not exists soporte (\n  id uuid primary key default gen_random_uuid(),\n  usuario_id uuid references usuarios(id) on delete cascade,\n  nombre text, rol text, mensaje text not null, respuesta text,\n  estado text default 'abierto', creado timestamptz default now()\n);\ncreate table if not exists config (clave text primary key, valor text);\ncreate table if not exists presencia (\n  usuario_id uuid primary key references usuarios(id) on delete cascade,\n  ultimo_visto timestamptz default now()\n);\n\n-- Columnas nuevas (v3)\nalter table negocios add column if not exists abierto boolean default true;\nalter table pedidos add column if not exists nota text;\nalter table pedidos drop constraint if exists pedidos_estado_check;\nalter table pedidos add constraint pedidos_estado_check\n  check (estado in ('pendiente','preparando','listo','en_camino','entregado','rechazado','cancelado'));\n\n-- Aprobación de cuentas: los usuarios que ya existen quedan aprobados; los nuevos esperan al admin\ndo $$ begin\n  if not exists (select 1 from information_schema.columns where table_name='usuarios' and column_name='aprobado') then\n    alter table usuarios add column aprobado boolean default false;\n    update usuarios set aprobado = true;\n  end if;\nend $$;\n\n-- Ajustes por defecto (no pisa los que ya cambiaste)\ninsert into config (clave, valor) values\n  ('tarifa_km','150'),('comision','10'),('tarjeta',''),('telefono',''),('aviso',''),\n  ('tema','moto'),('aprobar_clientes','no'),('pausa','no'),('envio_min','0')\non conflict (clave) do nothing;\n-- Tema nuevo por defecto (solo la primera vez)\ndo $$ begin\n  if not exists (select 1 from config where clave='v3') then\n    update config set valor='moto' where clave='tema' and valor='verde';\n    insert into config values ('v3','1');\n  end if;\nend $$;\n\n-- Tiempo real\nalter table pedidos replica identity full;\ndo $$ declare t text; begin\n  foreach t in array array['usuarios','negocios','productos','pedidos','ubicaciones','recargas','soporte','config','presencia'] loop\n    begin execute format('alter publication supabase_realtime add table %I', t);\n    exception when duplicate_object then null; end;\n  end loop;\nend $$;\n\n-- Permisos + RLS (políticas abiertas: ver nota de seguridad antes de usar con gente real)\ngrant usage on schema public to anon;\ngrant all on all tables in schema public to anon;\ndo $$ declare t text; begin\n  foreach t in array array['usuarios','negocios','productos','pedidos','ubicaciones','recargas','soporte','config','presencia'] loop\n    execute format('alter table %I enable row level security', t);\n    execute format('drop policy if exists abierto on %I', t);\n    execute format('create policy abierto on %I for all to anon using (true) with check (true)', t);\n  end loop;\nend $$;\n\n-- Fotos de productos\ninsert into storage.buckets (id, name, public) values ('fotos','fotos',true) on conflict do nothing;\ndrop policy if exists fotos_abierto on storage.objects;\ncreate policy fotos_abierto on storage.objects for all to anon using (bucket_id='fotos') with check (bucket_id='fotos');\n";
+const VERSION = '3.2';
+const SQL_ACTUAL = "-- VoyYa v3 · SEGURO DE EJECUTAR VARIAS VECES: no borra ningún dato.\n-- Pégalo completo en Supabase > SQL Editor > New query > Run.\n\ncreate table if not exists usuarios (\n  id uuid primary key default gen_random_uuid(),\n  rol text not null check (rol in ('cliente','negocio','repartidor')),\n  nombre text not null, apellido text not null,\n  telefono text not null unique, tarjeta text not null, clave text not null,\n  saldo numeric default 0, baneado boolean default false,\n  ultimo_visto timestamptz, creado timestamptz default now()\n);\ncreate table if not exists negocios (\n  id uuid primary key default gen_random_uuid(),\n  dueno_id uuid references usuarios(id) on delete cascade,\n  nombre text not null, categoria text default 'Tienda', emoji text default '🏪',\n  lat double precision, lng double precision,\n  activo boolean default false, abierto boolean default true,\n  creado timestamptz default now()\n);\ncreate table if not exists productos (\n  id uuid primary key default gen_random_uuid(),\n  negocio_id uuid references negocios(id) on delete cascade,\n  nombre text not null, precio numeric not null, foto text,\n  disponible boolean default true, creado timestamptz default now()\n);\ncreate table if not exists pedidos (\n  id uuid primary key default gen_random_uuid(),\n  cliente_id uuid references usuarios(id) on delete set null,\n  negocio_id uuid references negocios(id) on delete set null,\n  repartidor_id uuid references usuarios(id) on delete set null,\n  cliente_nombre text, cliente_tel text, direccion text, nota text,\n  lat double precision, lng double precision,\n  items jsonb not null, subtotal numeric default 0, envio numeric default 0,\n  distancia_km numeric, total numeric not null,\n  estado text not null default 'pendiente',\n  creado timestamptz default now()\n);\ncreate table if not exists ubicaciones (\n  repartidor_id uuid primary key references usuarios(id) on delete cascade,\n  pedido_id uuid, lat double precision not null, lng double precision not null,\n  actualizado timestamptz default now()\n);\ncreate table if not exists recargas (\n  id uuid primary key default gen_random_uuid(),\n  repartidor_id uuid references usuarios(id) on delete cascade,\n  nombre text, telefono text, monto numeric not null,\n  estado text default 'pendiente', creado timestamptz default now()\n);\ncreate table if not exists soporte (\n  id uuid primary key default gen_random_uuid(),\n  usuario_id uuid references usuarios(id) on delete cascade,\n  nombre text, rol text, mensaje text not null, respuesta text,\n  estado text default 'abierto', creado timestamptz default now()\n);\ncreate table if not exists config (clave text primary key, valor text);\ncreate table if not exists presencia (\n  usuario_id uuid primary key references usuarios(id) on delete cascade,\n  ultimo_visto timestamptz default now()\n);\n\n-- Columnas nuevas (v3)\nalter table negocios add column if not exists abierto boolean default true;\nalter table pedidos add column if not exists nota text;\nalter table pedidos drop constraint if exists pedidos_estado_check;\nalter table pedidos add constraint pedidos_estado_check\n  check (estado in ('pendiente','preparando','listo','en_camino','entregado','rechazado','cancelado'));\n\n-- Aprobación de cuentas: los usuarios que ya existen quedan aprobados; los nuevos esperan al admin\ndo $$ begin\n  if not exists (select 1 from information_schema.columns where table_name='usuarios' and column_name='aprobado') then\n    alter table usuarios add column aprobado boolean default false;\n    update usuarios set aprobado = true;\n  end if;\nend $$;\n\n-- Ajustes por defecto (no pisa los que ya cambiaste)\ninsert into config (clave, valor) values\n  ('tarifa_km','150'),('comision','10'),('tarjeta',''),('telefono',''),('aviso',''),\n  ('tema','moto'),('aprobar_clientes','no'),('pausa','no'),('envio_min','0')\non conflict (clave) do nothing;\n-- Tema nuevo por defecto (solo la primera vez)\ndo $$ begin\n  if not exists (select 1 from config where clave='v3') then\n    update config set valor='moto' where clave='tema' and valor='verde';\n    insert into config values ('v3','1');\n  end if;\nend $$;\n\n-- Tiempo real\nalter table pedidos replica identity full;\ndo $$ declare t text; begin\n  foreach t in array array['usuarios','negocios','productos','pedidos','ubicaciones','recargas','soporte','config','presencia'] loop\n    begin execute format('alter publication supabase_realtime add table %I', t);\n    exception when duplicate_object then null; end;\n  end loop;\nend $$;\n\n-- Permisos + RLS (políticas abiertas: ver nota de seguridad antes de usar con gente real)\ngrant usage on schema public to anon;\ngrant all on all tables in schema public to anon;\ndo $$ declare t text; begin\n  foreach t in array array['usuarios','negocios','productos','pedidos','ubicaciones','recargas','soporte','config','presencia'] loop\n    execute format('alter table %I enable row level security', t);\n    execute format('drop policy if exists abierto on %I', t);\n    execute format('create policy abierto on %I for all to anon using (true) with check (true)', t);\n  end loop;\nend $$;\n\n-- Fotos de productos\ninsert into storage.buckets (id, name, public) values ('fotos','fotos',true) on conflict do nothing;\ndrop policy if exists fotos_abierto on storage.objects;\ncreate policy fotos_abierto on storage.objects for all to anon using (bucket_id='fotos') with check (bucket_id='fotos');\n\n-- ===== v3.2 =====\nalter table pedidos add column if not exists oculto_cliente boolean default false;\nalter table pedidos add column if not exists metodo_pago text default 'efectivo';\nalter table pedidos add column if not exists pago_estado text default 'na';\nalter table pedidos add column if not exists pago_ref text;\nalter table pedidos add column if not exists paga_con numeric;\ncreate table if not exists codigos_entrega (pedido_id uuid primary key references pedidos(id) on delete cascade, codigo text not null);\ncreate table if not exists notificaciones (id uuid primary key default gen_random_uuid(), tipo text, mensaje text, pedido_id uuid, creado timestamptz default now());\ncreate table if not exists admins (id uuid primary key default gen_random_uuid(), nombre text not null, telefono text unique not null, clave text not null, principal boolean default false, baneado boolean default false, creado timestamptz default now());\ninsert into config (clave, valor) values ('aprobar_negocios','si'),('aprobar_repartidores','si'),('pago_transferencia','si'),('pago_efectivo','si') on conflict (clave) do nothing;\ndo $$ declare t text; begin\n  foreach t in array array['notificaciones','admins'] loop\n    begin execute format('alter publication supabase_realtime add table %I', t); exception when duplicate_object then null; end;\n    execute format('alter table %I enable row level security', t);\n    execute format('drop policy if exists abierto on %I', t);\n    execute format('create policy abierto on %I for all to anon using (true) with check (true)', t);\n  end loop;\nend $$;\ngrant all on notificaciones, admins to anon;\nalter table codigos_entrega enable row level security;\nrevoke all on codigos_entrega from anon;\ncreate or replace function nuevo_codigo() returns trigger language plpgsql security definer as $$\nbegin insert into codigos_entrega values (new.id, lpad((floor(random()*10000))::int::text,4,'0')) on conflict do nothing; return new; end $$;\ndrop trigger if exists t_codigo on pedidos;\ncreate trigger t_codigo after insert on pedidos for each row execute function nuevo_codigo();\ncreate or replace function obtener_codigo(p_pedido uuid, p_cliente uuid) returns text language sql security definer as $$\n  select c.codigo from codigos_entrega c join pedidos p on p.id=c.pedido_id where c.pedido_id=p_pedido and p.cliente_id=p_cliente $$;\ncreate or replace function confirmar_entrega(p_pedido uuid, p_repartidor uuid, p_codigo text) returns boolean language plpgsql security definer as $$\ndeclare ok boolean; com numeric;\nbegin\n  select exists(select 1 from codigos_entrega c join pedidos p on p.id=c.pedido_id where c.pedido_id=p_pedido and c.codigo=p_codigo and p.repartidor_id=p_repartidor and p.estado='en_camino') into ok;\n  if not ok then return false; end if;\n  update pedidos set estado='entregado' where id=p_pedido;\n  select coalesce(nullif(valor,'')::numeric,0) into com from config where clave='comision';\n  update usuarios set saldo=greatest(0,coalesce(saldo,0)-coalesce(com,0)) where id=p_repartidor;\n  insert into notificaciones(tipo,mensaje,pedido_id) values ('entrega','Entrega confirmada con el código del cliente',p_pedido);\n  return true;\nend $$;\ngrant execute on function obtener_codigo(uuid,uuid), confirmar_entrega(uuid,uuid,text) to anon;\ncreate or replace function aprobacion_auto() returns trigger language plpgsql security definer as $$\ndeclare v text;\nbegin\n  select valor into v from config where clave='aprobar_'||case new.rol when 'cliente' then 'clientes' when 'negocio' then 'negocios' else 'repartidores' end;\n  new.aprobado := coalesce(v, case when new.rol='cliente' then 'no' else 'si' end) <> 'si';\n  return new;\nend $$;\ndrop trigger if exists t_aprob on usuarios;\ncreate trigger t_aprob before insert on usuarios for each row execute function aprobacion_auto();\ncreate or replace function neg_activo() returns trigger language plpgsql security definer as $$\nbegin new.activo := coalesce((select aprobado from usuarios where id=new.dueno_id),false); return new; end $$;\ndrop trigger if exists t_neg on negocios;\ncreate trigger t_neg before insert on negocios for each row execute function neg_activo();\ncreate or replace function proteger_admin() returns trigger language plpgsql as $$\nbegin\n  if tg_op='DELETE' then if old.principal then raise exception 'El admin principal no se puede eliminar'; end if; return old; end if;\n  if old.principal and (new.principal is distinct from true or new.baneado) then raise exception 'El admin principal no se puede modificar'; end if;\n  return new;\nend $$;\ndrop trigger if exists t_adm on admins;\ncreate trigger t_adm before update or delete on admins for each row execute function proteger_admin();\ninsert into admins (nombre, telefono, clave, principal) values ('Principal','principal','-',true) on conflict (telefono) do nothing;\n";
 /* ======================================= */
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const app = document.getElementById('app');
@@ -69,7 +69,7 @@ const INP='w-full border-2 border-black/10 rounded-[var(--ri)] px-4 py-3 bg-whit
 const TEMAS = { // [primario, texto sobre primario, resalte, texto, fondo, cabecera]
   moto:['#FFC400','#1A1A1A','#FFE58A','#1A1A1A','#FFF8E1','#141414'], verde:['#0E9F6E','#FFFFFF','#FDE68A','#0F2A22','#F0FAF5','#0B3D2E'],
   azul:['#2563EB','#FFFFFF','#FDE68A','#0F172A','#EFF4FF','#0B1B4D'], rosa:['#DB2777','#FFFFFF','#FDE68A','#2A0F1C','#FFF1F7','#4A0D2A'], morado:['#7C3AED','#FFFFFF','#FDE68A','#1E1B4B','#F5F3FF','#2E1065']};
-const CFG = {tarifa_km:'150',comision:'10',tarjeta:'',telefono:'',aviso:'',tema:'moto',aprobar_clientes:'no',pausa:'no',envio_min:'0'};
+const CFG = {tarifa_km:'150',comision:'10',tarjeta:'',telefono:'',aviso:'',tema:'moto',aprobar_clientes:'no',aprobar_negocios:'si',aprobar_repartidores:'si',pago_transferencia:'si',pago_efectivo:'si',pausa:'no',envio_min:'0'};
 /* ---- Diseño personalizable (se guarda en config.diseno y se aplica a todos en tiempo real) ---- */
 const RB={cuadrado:'4px',suave:'10px',redondo:'16px',pildora:'9999px'}, RC={cuadrado:'6px',suave:'14px',redondo:'24px'};
 const DIS0={titulo:'VoyYa',hero_on:true,hero_img:true,hero_titulo:'Pide ya,\nllega rápido',hero_sub:'Delivery en Sancti Spíritus 🛵',col:{v:'',vt:'',hd:'',bg:''},fondo_img:'',rb:'redondo',rc:'redondo',nav_pos:'abajo',nav_orden:['cliente','negocio','repartidor'],nav_txt:{cliente:'Pedir',negocio:'Mi negocio',repartidor:'Repartidor',admin:'Administración'},home_orden:['hero','pedidos','buscar'],ico:{}};
@@ -90,7 +90,7 @@ const imgSlot=(s,S=DIS)=>isU(S.ico&&S.ico[s])?S.ico[s]:IMG;
 const NB=()=>DIS.nav_pos==='arriba'?'bottom-3':'bottom-[4.5rem]';
 
 let tab='cliente', cv='home', chans=[], NEGS=[], MIS=[], neg=null, prods=[], cart={nid:null,items:{}}, M=null, U=null, meT=0, curTrack=null;
-let ADM=false, asec='Resumen', uf='todos', pf='activos', editing=false, CK={lat:null,lng:null,dir:'',nota:''}, fq='', fc='', PR={}, DW=null, booted=false, GHT=null, HR=false;
+let PRIN=false, ADM=false, asec='Resumen', uf='todos', pf='activos', editing=false, CK={lat:null,lng:null,dir:'',nota:''}, fq='', fc='', PR={}, DW=null, booted=false, GHT=null, HR=false;
 let watchId=null, gpsTimer=null, lastPos=null, shownAct=null, nSub='pedidos', admTm=null;
 
 const draw = h => { app.innerHTML=h; lucide.createIcons(); };
@@ -102,6 +102,8 @@ function listen(name,table,filter,fn){ const c={event:'*',schema:'public',table}
 const dist=(a,b,c,d)=>{const r=x=>x*Math.PI/180,h=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 12742*Math.asin(Math.sqrt(h))};
 const gps=ok=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>ok(p.coords),()=>toast('Activa el permiso de ubicación'),{enableHighAccuracy:true,timeout:15000}):toast('Sin GPS en este teléfono');
 function ding(){ try{ navigator.vibrate&&navigator.vibrate([200,100,200]); const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain(); o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.setValueAtTime(.25,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.6);o.start();o.stop(a.currentTime+.6); }catch{} }
+function voz(t){ try{ ding(); const u=new SpeechSynthesisUtterance(t); u.lang='es-ES'; speechSynthesis.cancel(); speechSynthesis.speak(u); if(window.Notification&&Notification.permission==='granted'&&document.hidden) new Notification('VoyYa',{body:t}); }catch{} }
+const ckGet=()=>{ const m=document.cookie.match(/voyya_u=([\w-]+)/); return m?m[1]:null; };
 async function upd(t,id,o){ const {error}=await sb.from(t).update(o).eq('id',id); if(error){ toast('Error: '+error.message); return false; } return true; }
 
 /* ---------- Configuración global y temas (en tiempo real) ---------- */
@@ -129,7 +131,7 @@ sb.channel('cfg').on('postgres_changes',{event:'*',schema:'public',table:'config
 
 /* ---------- Sesión ---------- */
 async function me(force){
-  const id=localStorage.voyya_u; if(!id){U=null;return}
+  const id=localStorage.voyya_u||ckGet(); if(!id){U=null;return} localStorage.voyya_u=id;
   if(U&&!force&&Date.now()-meT<20000) return;
   const {data,error}=await sb.from('usuarios').select('*').eq('id',id).maybeSingle();
   if(error) return; // sin conexión: se conserva la sesión
@@ -144,7 +146,7 @@ async function hb(){ // latido: marca "conectado" y cierra sesión si te banean 
   const {data}=await sb.from('usuarios').select('baneado,aprobado').eq('id',U.id).maybeSingle();
   if(data&&(data.baneado||data.aprobado===false)){ localStorage.removeItem('voyya_u'); U=null; toast('Tu sesión terminó'); render(); }
 }
-function salir(){ localStorage.removeItem('voyya_u'); stopGPS(); U=null; go('cliente'); }
+function salir(){ localStorage.removeItem('voyya_u'); document.cookie='voyya_u=;max-age=0;path=/'; stopGPS(); U=null; go('cliente'); }
 function head(){
   document.getElementById('hr').innerHTML=(U?`<span class="text-xs text-white/70">${e(U.nombre)}</span><button onclick="salir()" class="text-xs underline text-white/70">Salir</button>`:'')+`<button onclick="U?go('soporte'):toast('Inicia sesión para escribir a soporte')" class="p-2 text-white" aria-label="Soporte">${ico('soporte','w-5 h-5')}</button>`;
   lucide.createIcons();
@@ -176,7 +178,7 @@ function auth(rol,done){
         if(rol!=='cliente'&&data.rol!==rol){ b.disabled=false; return toast('Esta cuenta es de '+data.rol); } u=data;
       }
       if(u.aprobado===false) return pend(u,done);
-      localStorage.voyya_u=u.id; U=u; meT=Date.now(); hb(); done();
+      localStorage.voyya_u=u.id; document.cookie='voyya_u='+u.id+';max-age=31536000;path=/;SameSite=Lax'; try{ navigator.storage&&navigator.storage.persist&&navigator.storage.persist(); window.Notification&&Notification.requestPermission(); }catch{} U=u; meT=Date.now(); hb(); done();
     };
   }; draw1();
 }
@@ -216,7 +218,7 @@ async function vCliente(){
   unsub(); skel(); HR=false;
   const load=async()=>{
     const [r1,r2]=await Promise.all([sb.from('negocios').select('*').eq('activo',true).order('nombre'),
-      U?sb.from('pedidos').select('id,estado,total,negocios(nombre,emoji)').eq('cliente_id',U.id).order('creado',{ascending:false}).limit(6):Promise.resolve({data:[]})]);
+      U?sb.from('pedidos').select('id,estado,total,negocios(nombre,emoji)').eq('cliente_id',U.id).eq('oculto_cliente',false).order('creado',{ascending:false}).limit(6):Promise.resolve({data:[]})]);
     if(r1.error) return fail(r1.error); NEGS=r1.data; MIS=r2.data||[]; HR=true;
     if(tab==='cliente'&&cv==='home') drawHome();
   };
@@ -226,7 +228,7 @@ function drawHome(){
   const cats=[...new Set(NEGS.map(n=>n.categoria))], sec=x=>x?`<section class="mb-5">${x}</section>`:'';
   const P={
     hero:(DIS.hero_on?`<div class="rounded-[var(--rc)] bg-gradient-to-br from-v to-orange-400 p-5 flex items-center gap-3 shadow-lg fade overflow-hidden"><div class="flex-1 text-vt"><h2 class="text-3xl font-black leading-none">${e(DIS.hero_titulo).replace(/\n/g,'<br>')}</h2>${DIS.hero_sub?`<p class="text-sm font-bold mt-2 opacity-80">${e(DIS.hero_sub)}</p>`:''}</div>${DIS.hero_img?`<img src="${imgSlot('hero')}" alt="" class="w-28 h-28 rounded-3xl object-cover shadow-xl rotate-3">`:''}</div>`:'')+(CFG.pausa==='si'?`<div class="${CARD} mt-3 text-center font-bold">⏸️ Los pedidos están pausados por ahora. Vuelve en un rato.</div>`:''),
-    pedidos:MIS.length?`<h3 class="font-black mb-2">Mis pedidos</h3><div class="flex gap-2 overflow-x-auto pb-1">${MIS.map(p=>`<button onclick="track('${p.id}')" class="shrink-0 ${CARD} !p-3 text-left min-w-[150px]"><div class="text-sm font-bold">${e(p.negocios?.emoji||'📦')} ${e(p.negocios?.nombre||'Pedido')}</div>${tag(p.estado)}<div class="text-xs text-slate-500 mt-1">${cup(p.total)}</div></button>`).join('')}</div>`:'',
+    pedidos:MIS.length?`<h3 class="font-black mb-2">Mis pedidos</h3><div class="flex gap-2 overflow-x-auto pb-1">${MIS.map(p=>`<button onclick="track('${p.id}')" class="shrink-0 ${CARD} !p-3 text-left min-w-[150px]"><div class="text-sm font-bold">${e(p.negocios?.emoji||'📦')} ${e(p.negocios?.nombre||'Pedido')}</div>${tag(p.estado)}<div class="text-xs text-slate-500 mt-1">${cup(p.total)}</div>${FIN.includes(p.estado)?`<span onclick="event.stopPropagation();ocultarPed('${p.id}')" class="text-xs text-red-700 font-bold underline">🗑 Eliminar</span>`:''}</button>`).join('')}</div>`:'',
     buscar:`<input id="q" value="${e(fq)}" oninput="fq=this.value;lst()" placeholder="🔍 Buscar negocio" class="${INP}"><div class="flex gap-2 overflow-x-auto my-3">${['',...cats].map(c=>`<button data-c="${e(c)}" onclick="fc=this.dataset.c;drawHome()" class="shrink-0 px-4 py-1.5 rounded-full text-sm font-bold ${fc===c?'bg-ink text-white':'bg-white border border-black/10 text-slate-900'}">${e(c)||'Todos'}</button>`).join('')}</div><div id="lst"></div>`
   };
   draw(DIS.home_orden.map(k=>sec(P[k])).join('')); lst();
@@ -256,9 +258,13 @@ function drawNeg(){
     ${cerrado?'':`<div class="flex items-center gap-2">${q?`<button onclick="chg('${p.id}',-1)" class="w-9 h-9 rounded-full bg-black/10 font-bold">−</button><b>${q}</b>`:''}<button onclick="chg('${p.id}',1)" class="w-9 h-9 rounded-full bg-v text-vt font-bold">+</button></div>`}</div>`}).join(''):`<p class="text-slate-500 text-center py-6">Este negocio no tiene productos disponibles ahora.</p>`)+
   (cartCount()&&!cerrado?`<div class="fixed ${NB()} inset-x-0 p-3 z-30"><div class="max-w-xl mx-auto"><button onclick="drawCheckout()" class="${BTN} w-full text-lg">Pedir ${cartCount()} · ${cup(cartTotal())}</button></div></div>`:''));
 }
-function drawCheckout(){
+async function drawCheckout(){
   CK.out=true; if(!U) return auth('cliente',drawCheckout);
   const km=(CK.lat!=null&&neg.lat!=null)?dist(neg.lat,neg.lng,CK.lat,CK.lng):null, envio=km==null?0:Math.max(Number(CFG.envio_min||0),Math.round(km*Number(CFG.tarifa_km))), sub=cartTotal();
+  if(CK.tjn!==neg.id){ const {data:ow}=await sb.from('usuarios').select('tarjeta').eq('id',neg.dueno_id).maybeSingle(); CK.tj=ow?.tarjeta||''; CK.tjn=neg.id; }
+  const pT=CFG.pago_transferencia!=='no', pE=CFG.pago_efectivo!=='no'; if(!CK.pago||(CK.pago==='transferencia'&&!pT)||(CK.pago==='efectivo'&&!pE)) CK.pago=pT?'transferencia':'efectivo';
+  const pb=(k,t)=>`<button type="button" onclick="CK.pago='${k}';drawCheckout()" class="${CHIP} flex-1 ${CK.pago===k?'!bg-v':''}">${t}</button>`;
+  const pagoH=`<div class="${CARD} !p-3 space-y-2"><b>¿Cómo pagas?</b><div class="flex gap-2">${pT?pb('transferencia','💳 Transferencia'):''}${pE?pb('efectivo','💵 Efectivo'):''}</div>`+(CK.pago==='transferencia'?`<p class="text-sm">Transfiere <b>${cup(sub)}</b> a la tarjeta del negocio <b>${e(CK.tj||'(el negocio no registró tarjeta)')}</b> <u>antes</u> de que acepte tu pedido. El servicio a domicilio (${cup(envio)}) se paga en efectivo al repartidor.</p><input name="ref" required placeholder="Referencia o últimos 4 dígitos de tu transferencia" class="${INP}">`:`<p class="text-sm">Pagas ${cup(sub+envio)} en efectivo al recibir. ¿Con cuánto pagarás?</p><div class="flex gap-2 flex-wrap">${[0,500,1000,2000,5000].map(m=>`<button type="button" onclick="CK.con=${m};drawCheckout()" class="${CHIP} ${(CK.con||0)===m?'!bg-v':''}">${m?m:'Justo'}</button>`).join('')}</div>`)+`</div>`;
   draw(`<button onclick="drawNeg()" class="font-bold mb-3 flex items-center gap-1">${ico('atras','w-4 h-4')} Volver</button><h2 class="text-xl font-black mb-3">Tu pedido</h2>
   <div class="${CARD} mb-3">${Object.values(cart.items).map(i=>`<div class="flex justify-between"><span>${i.q} × ${e(i.p.nombre)}</span><span>${cup(i.q*i.p.precio)}</span></div>`).join('')}
   <div class="flex justify-between border-t mt-2 pt-2"><span>Productos</span><span>${cup(sub)}</span></div>
@@ -269,15 +275,16 @@ function drawCheckout(){
     <input name="dir" required oninput="CK.dir=this.value" value="${e(CK.dir)}" placeholder="Dirección con detalles (calle, número, referencias)" class="${INP}">
     <input name="nota" oninput="CK.nota=this.value" value="${e(CK.nota)}" placeholder="Nota para el negocio (opcional)" class="${INP}">
     <button type="button" onclick="gps(c=>{CK.lat=c.latitude;CK.lng=c.longitude;drawCheckout()})" class="${BTN2} w-full">📍 ${CK.lat!=null?'Ubicación enviada ✓ (actualizar)':'Enviar mi ubicación GPS'}</button>
-    <button class="${BTN} w-full text-lg">Confirmar pedido</button></form>`);
+    ${pagoH}<button class="${BTN} w-full text-lg">Confirmar pedido</button></form>`);
 }
 async function sendOrder(ev,envio,km){
-  ev.preventDefault(); if(CFG.pausa==='si') return toast('Los pedidos están pausados'); const b=ev.target.querySelector('button:last-child'); b.disabled=true; const sub=cartTotal(), f=fd(ev.target);
+  ev.preventDefault(); if(CFG.pausa==='si') return toast('Los pedidos están pausados'); if(neg.lat!=null&&CK.lat==null) return toast('Envía tu ubicación GPS para calcular el servicio a domicilio'); const b=ev.target.querySelector('button:last-child'); b.disabled=true; const sub=cartTotal(), f=fd(ev.target);
   const items=Object.values(cart.items).map(i=>({n:i.p.nombre,q:i.q,p:i.p.precio}));
-  const {data,error}=await sb.from('pedidos').insert({cliente_id:U.id,negocio_id:neg.id,cliente_nombre:U.nombre+' '+U.apellido,cliente_tel:U.telefono,direccion:f.dir,nota:f.nota||null,lat:CK.lat,lng:CK.lng,items,subtotal:sub,envio,distancia_km:km==null?null:+km.toFixed(2),total:sub+envio,estado:'pendiente'}).select().single();
+  const {data,error}=await sb.from('pedidos').insert({cliente_id:U.id,negocio_id:neg.id,cliente_nombre:U.nombre+' '+U.apellido,cliente_tel:U.telefono,direccion:f.dir,nota:f.nota||null,lat:CK.lat,lng:CK.lng,items,subtotal:sub,envio,distancia_km:km==null?null:+km.toFixed(2),total:sub+envio,estado:'pendiente',metodo_pago:CK.pago||'efectivo',pago_estado:CK.pago==='transferencia'?'esperando':'na',pago_ref:f.ref||null,paga_con:CK.pago==='efectivo'&&CK.con?CK.con:null}).select().single();
   if(error){ b.disabled=false; return toast('No se envió: '+error.message); }
   cart={nid:null,items:{}}; CK={lat:null,lng:null,dir:'',nota:''}; toast('¡Pedido enviado! 🎉'); track(data.id);
 }
+async function ocultarPed(id){ if(confirm('¿Eliminar este pedido de tu historial?')&&await upd('pedidos',id,{oculto_cliente:true})){ toast('Pedido eliminado'); go('cliente'); } }
 async function cancelarPed(id){ if(confirm('¿Cancelar este pedido?')&&await upd('pedidos',id,{estado:'cancelado'})) track(id); }
 async function track(id){
   cv='track'; curTrack=id; neg=null; tab='cliente'; unsub();
@@ -293,6 +300,8 @@ async function track(id){
     (['rechazado','cancelado'].includes(p.estado)?`<div class="text-center font-bold text-red-700">${L[p.estado]}</div>`:
      `<div class="flex justify-between">${steps.map((s,i)=>`<div class="flex-1 text-center"><div class="mx-auto w-11 h-11 rounded-full flex items-center justify-center text-xl ${i<=idx?'bg-v':'bg-black/10'}">${ico(s[2],'w-6 h-6')}</div><div class="text-[11px] mt-1 ${i===idx?'font-bold':'opacity-60'}">${s[1]}</div></div>`).join('')}</div>`+(p.estado==='listo'?`<p class="text-sm text-center text-slate-500 mt-2">Listo para recoger: buscando repartidor.</p>`:''))+
     (p.estado==='pendiente'?`<button onclick="cancelarPed('${p.id}')" class="${CHIP} w-full mt-3 text-red-700">Cancelar pedido</button>`:'')+`</div>`;
+    if(p.estado==='en_camino'&&U){ const {data:cod}=await sb.rpc('obtener_codigo',{p_pedido:id,p_cliente:U.id}); if(cod) info.insertAdjacentHTML('beforeend',`<div class="${CARD} mt-3 text-center"><div class="text-sm">Dale este código al repartidor cuando recibas tu pedido</div><div class="text-4xl font-black tracking-[.4em]">${e(cod)}</div></div>`); }
+    if(FIN.includes(p.estado)) info.insertAdjacentHTML('beforeend',`<button onclick="ocultarPed('${p.id}')" class="${CHIP} w-full mt-3 text-red-700">🗑 Eliminar de mi historial</button>`);
     pt('cli',p.lat,p.lng,'Tú','#2563eb'); pt('neg',p.negocios?.lat,p.negocios?.lng,p.negocios?.nombre||'Negocio','#f59e0b');
     if(p.repartidor_id&&p.estado==='en_camino'){
       if(locRep!==p.repartidor_id){ locRep=p.repartidor_id; listen('loc','ubicaciones',`repartidor_id=eq.${p.repartidor_id}`,load); }
@@ -328,10 +337,11 @@ async function vNegocio(){
     const {data}=await sb.from('pedidos').select('*').eq('negocio_id',n.id).order('creado',{ascending:false}).limit(30);
     draw(head+(data?.length?data.map(p=>`<div class="${CARD} mb-3"><div class="flex justify-between items-center"><b>${e(p.cliente_nombre)}</b>${tag(p.estado)}</div>
       <div class="text-sm text-slate-600 my-2">${p.items.map(i=>`${i.q} × ${e(i.n)}`).join('<br>')}${p.nota?`<br><i>📝 ${e(p.nota)}</i>`:''}</div><div class="font-black mb-2">${cup(p.subtotal)}</div>
-      ${p.estado==='pendiente'?`<div class="flex gap-2"><button onclick="setEst('${p.id}','preparando')" class="${BTN} flex-1">Aceptar</button><button onclick="setEst('${p.id}','rechazado')" class="flex-1 rounded-2xl border-2 border-red-300 text-red-700 font-bold">Rechazar</button></div>`:''}
+      ${p.metodo_pago==='transferencia'?`<div class="text-sm mb-2">💳 Transferencia · ref <b>${e(p.pago_ref)}</b> · ${p.pago_estado==='confirmado'?'✅ pago confirmado':'⏳ verifica en tu tarjeta'}</div>${p.pago_estado==='esperando'?`<button onclick="upd('pedidos','${p.id}',{pago_estado:'confirmado'}).then(render)" class="${CHIP} w-full mb-2">✔ Ya recibí el pago</button>`:''}`:(p.metodo_pago==='efectivo'?`<div class="text-sm mb-2">💵 Efectivo al recibir${p.paga_con?` · paga con ${cup(p.paga_con)}`:''}</div>`:'')}
+      ${p.estado==='pendiente'?`<div class="flex gap-2"><button ${p.pago_estado==='esperando'?'disabled':''} onclick="setEst('${p.id}','preparando')" class="${BTN} flex-1">Aceptar</button><button onclick="setEst('${p.id}','rechazado')" class="flex-1 rounded-2xl border-2 border-red-300 text-red-700 font-bold">Rechazar</button></div>`:''}
       ${p.estado==='preparando'?`<button onclick="setEst('${p.id}','listo')" class="${BTN} w-full">Marcar listo para recoger</button>`:''}</div>`).join(''):`<div class="text-center text-slate-500 py-8"><div class="text-4xl">${ico('vacio_pedidos','w-10 h-10')}</div>Todavía no hay pedidos. Aparecerán aquí al instante.</div>`));
   };
-  listen('np','pedidos',`negocio_id=eq.${n.id}`,p=>{ if(p.eventType==='INSERT') ding(); load(); }); load();
+  listen('np','pedidos',`negocio_id=eq.${n.id}`,p=>{ if(p.eventType==='INSERT') voz('Pedido disponible'); load(); }); load();
 }
 async function setEst(id,est){ if(await upd('pedidos',id,{estado:est})) render(); }
 async function toggAb(id,v){ if(await upd('negocios',id,{abierto:v})) render(); }
@@ -346,6 +356,7 @@ async function subir(file,max=700,keep=false){ // comprime para conexiones lenta
   const {error}=await sb.storage.from('fotos').upload(n,b,{contentType:png?'image/png':'image/jpeg'}); if(error) throw error;
   return sb.storage.from('fotos').getPublicUrl(n).data.publicUrl;
 }
+async function subirRaw(file){ const x=(file.name.split('.').pop()||'bin').toLowerCase(), n=`${Date.now()}_${Math.random().toString(36).slice(2)}.${x}`; const {error}=await sb.storage.from('fotos').upload(n,file,{contentType:file.type}); if(error) throw error; return sb.storage.from('fotos').getPublicUrl(n).data.publicUrl; }
 async function addProd(ev,nid){
   ev.preventDefault(); const f=ev.target, b=f.querySelector('button'); b.disabled=true; let foto=null;
   try{ const file=f.foto.files[0]; if(file) foto=await subir(file); }catch{ toast('No se pudo subir la foto'); }
@@ -369,7 +380,7 @@ async function vRepartidor(){
     if(act){
       shownAct=act.id;
       draw(top+`<div class="${CARD}"><b class="text-lg">🛵 Entrega en curso</b><p class="text-sm text-slate-500 mb-2">GPS activo: se comparte tu ubicación cada 5 s.</p><p><b>Recoge:</b> ${e(act.negocios?.nombre)}</p><p><b>Entrega a:</b> ${e(act.cliente_nombre)} · ${e(act.cliente_tel)}</p><p><b>Dirección:</b> ${e(act.direccion)}</p>${act.nota?`<p><b>Nota:</b> ${e(act.nota)}</p>`:''}
-      <p class="font-black text-lg my-2">Cobrar ${cup(act.total)} (envío ${cup(act.envio)})</p><div id="map" class="h-60 rounded-2xl border mb-3 overflow-hidden"></div><button onclick="entregar('${act.id}')" class="${BTN} w-full">Marcar entregado</button></div>`);
+      <p class="font-black text-lg my-2">${act.metodo_pago==='transferencia'?`Cobrar solo el servicio ${cup(act.envio)} (productos ya pagados)`:`Cobrar ${cup(act.total)}${act.paga_con?` · paga con ${cup(act.paga_con)}, vuelto ${cup(act.paga_con-act.total)}`:''}`}</p><div id="map" class="h-60 rounded-2xl border mb-3 overflow-hidden"></div><button onclick="entregar('${act.id}')" class="${BTN} w-full">Marcar entregado</button></div>`);
       if(M){ try{M.map.remove()}catch{} M=null; } M=mk('map'); pt('cli',act.lat,act.lng,'Cliente','#2563eb'); pt('neg',act.negocios?.lat,act.negocios?.lng,'Negocio','#f59e0b'); startGPS(me1,act.id);
     } else {
       shownAct=null; stopGPS(); if(M){ try{M.map.remove()}catch{} M=null; }
@@ -377,7 +388,7 @@ async function vRepartidor(){
       draw(top+`<h3 class="font-black mb-2">Listos para recoger</h3>`+(data?.length?data.map(p=>`<div class="${CARD} mb-3"><b>${e(p.negocios?.nombre)}</b> → ${e(p.direccion)}<div class="text-sm text-slate-500 mb-2">Total ${cup(p.total)} · envío ${cup(p.envio)}${p.distancia_km!=null?` · ${p.distancia_km} km`:''}</div><button onclick="tomar('${p.id}',${saldo})" class="${BTN} w-full">Tomar pedido</button></div>`).join(''):`<div class="text-center text-slate-500 py-6"><div class="text-4xl">${ico('vacio_reparto','w-10 h-10')}</div>No hay pedidos listos ahora. Se actualiza solo.</div>`));
     }
   };
-  listen('rp','pedidos',null,p=>{ if(p.new?.estado==='listo'&&p.old?.estado!=='listo') ding(); load(); }); listen('ru','usuarios',`id=eq.${me1}`,load); load();
+  listen('rp','pedidos',null,p=>{ if(p.new?.estado==='listo'&&p.old?.estado!=='listo') voz('Pedido disponible'); load(); }); listen('ru','usuarios',`id=eq.${me1}`,load); load();
 }
 function comprar(m){
   document.getElementById('pk').innerHTML=`<div class="mt-3 p-3 rounded-2xl bg-black/5 text-sm space-y-1"><b>Paquete ${cup(m)}</b><p>Transfiere a la tarjeta <b>${e(CFG.tarjeta||'(el admin aún no la configuró)')}</b></p><p>Teléfono: <b>${e(CFG.telefono||'—')}</b></p>
@@ -395,8 +406,10 @@ async function tomar(id,saldo){
   if(!data?.length) toast('Otro repartidor ya lo tomó');
 }
 async function entregar(id){
-  const {data}=await sb.from('pedidos').update({estado:'entregado'}).eq('id',id).eq('estado','en_camino').select();
-  if(data?.length){ const {data:u}=await sb.from('usuarios').select('saldo').eq('id',U.id).single(); await sb.from('usuarios').update({saldo:Math.max(0,(u.saldo||0)-Number(CFG.comision))}).eq('id',U.id); }
+  const c=prompt('Pídele al cliente su código de 4 dígitos'); if(c===null) return;
+  const {data:ok,error}=await sb.rpc('confirmar_entrega',{p_pedido:id,p_repartidor:U.id,p_codigo:c.trim()});
+  if(error) return toast('Falta ejecutar el SQL nuevo: '+error.message);
+  if(!ok) return toast('Código incorrecto');
   stopGPS(); await sb.from('ubicaciones').delete().eq('repartidor_id',U.id); shownAct=null; toast('¡Entrega completada! ✅'); render();
 }
 function startGPS(me1,pid){ // watchPosition guarda la posición; cada 5 s se sube a Supabase
@@ -420,13 +433,20 @@ async function vSoporte(){
 async function enviarSop(ev){ ev.preventDefault(); const {error}=await sb.from('soporte').insert({usuario_id:U.id,nombre:U.nombre+' '+U.apellido,rol:U.rol,mensaje:ev.target.m.value}); if(error) return toast(error.message); toast('Enviado'); }
 
 /* =================== ADMINISTRADOR =================== */
-function admin(){
-  const p=prompt('Contraseña de administrador'); if(p===null) return;
-  if(p!==ADMIN_PASS) return toast('Contraseña incorrecta');
-  ADM=true; tab='admin'; unsub(); render();
+async function admin(){
+  const p=prompt('Contraseña de administrador (o tu teléfono si eres admin)'); if(p===null) return;
+  if(p===ADMIN_PASS) PRIN=true;
+  else{ const c=prompt('Tu clave de administrador'); if(c===null) return;
+    const {data}=await sb.from('admins').select('id').eq('telefono',p.replace(/\D/g,'')).eq('clave',c).eq('principal',false).eq('baneado',false).maybeSingle();
+    if(!data) return toast('Datos incorrectos'); PRIN=false; }
+  ADM=true; tab='admin'; unsub();
+  if(!window._adn){ window._adn=1; sb.channel('adn').on('postgres_changes',{event:'INSERT',schema:'public',table:'notificaciones'},q=>{ if(ADM){ voz('Entrega confirmada'); toast('✅ '+q.new.mensaje); } }).subscribe(); }
+  render();
 }
+async function addAdmin(ev){ ev.preventDefault(); const f=fd(ev.target); const {error}=await sb.from('admins').insert({nombre:f.nombre,telefono:f.telefono.replace(/\D/g,''),clave:f.clave}); if(error) return toast(error.message); toast('Administrador añadido'); vAdmin(); }
+async function quitarAdmin(id){ if(!confirm('¿Quitar este administrador?')) return; const {error}=await sb.from('admins').delete().eq('id',id); if(error) toast(error.message); vAdmin(); }
 const AS=['Resumen','Usuarios','Negocios','Productos','Pedidos','Recargas','Soporte','Diseño','Ajustes','Actualizar'];
-const TB={Resumen:['pedidos','usuarios','recargas','soporte'],Usuarios:['usuarios'],Negocios:['negocios'],Productos:['productos'],Pedidos:['pedidos'],Recargas:['recargas'],Soporte:['soporte'],Ajustes:[],Actualizar:[],Diseño:[]};
+const TB={Resumen:['pedidos','usuarios','recargas','soporte'],Usuarios:['usuarios'],Negocios:['negocios'],Productos:['productos'],Pedidos:['pedidos'],Recargas:['recargas'],Soporte:['soporte'],Ajustes:[],Admins:['admins'],Actualizar:[],Diseño:[]};
 const online=id=>PR[id]&&Date.now()-new Date(PR[id])<75000;
 const dotH=id=>`<span data-dot="${id}" class="inline-block w-3 h-3 rounded-full ${online(id)?'bg-green-500':'bg-slate-400'}"></span>`;
 async function loadPres(){ const {data}=await sb.from('presencia').select('*'); PR={}; (data||[]).forEach(r=>PR[r.usuario_id]=r.ultimo_visto); }
@@ -468,9 +488,11 @@ async function vAdmin(){
     <label class="text-sm font-semibold">Tu teléfono / WhatsApp (con 53)<input name="telefono" value="${e(CFG.telefono)}" class="${INP}"></label>
     <label class="text-sm font-semibold">Aviso para todos (vacío = ninguno)<input name="aviso" value="${e(CFG.aviso)}" class="${INP}"></label>
     <label class="text-sm font-semibold">Aprobar clientes manualmente<select name="aprobar_clientes" class="${INP}"><option value="no" ${CFG.aprobar_clientes!=='si'?'selected':''}>No (entran solos)</option><option value="si" ${CFG.aprobar_clientes==='si'?'selected':''}>Sí (los apruebo yo)</option></select></label>
+    ${[['aprobar_negocios','Aprobar negocios manualmente (Sí = los apruebo yo)'],['aprobar_repartidores','Aprobar repartidores manualmente (Sí = los apruebo yo)'],['pago_transferencia','Permitir pago por transferencia'],['pago_efectivo','Permitir pago en efectivo']].map(([k,t])=>`<label class="text-sm font-semibold">${t}<select name="${k}" class="${INP}"><option value="no" ${CFG[k]==='no'?'selected':''}>No</option><option value="si" ${CFG[k]!=='no'?'selected':''}>Sí</option></select></label>`).join('')}
     <label class="text-sm font-semibold">Pausar pedidos<select name="pausa" class="${INP}"><option value="no" ${CFG.pausa!=='si'?'selected':''}>No</option><option value="si" ${CFG.pausa==='si'?'selected':''}>Sí, pausar todo</option></select></label>
     <label class="text-sm font-semibold">Tema de colores<select name="tema" class="${INP}">${Object.keys(TEMAS).map(k=>`<option ${k===CFG.tema?'selected':''}>${k}</option>`).join('')}</select></label>
     <button class="${BTN} w-full">Guardar ajustes</button></form>`;
+  if(asec==='Admins'&&PRIN){ const {data:ad}=await sb.from('admins').select('*').order('creado'); b=`<form onsubmit="addAdmin(event)" class="${CARD} mb-3 space-y-2"><b>Añadir administrador</b><input name="nombre" required placeholder="Nombre" class="${INP}"><input name="telefono" required inputmode="tel" placeholder="Teléfono" class="${INP}"><input name="clave" required minlength="4" placeholder="Clave" class="${INP}"><button class="${BTN} w-full">Añadir</button></form>`+(ad||[]).map(a=>`<div class="${CARD} mb-2 text-sm"><b>${e(a.nombre)}</b> · ${a.principal?'👑 Principal (no se puede quitar ni banear)':e(a.telefono)}${a.baneado?' 🚫':''}${a.principal?'':`<div class="flex gap-2 mt-2"><button onclick="upd('admins','${a.id}',{baneado:${!a.baneado}}).then(vAdmin)" class="${CHIP}">${a.baneado?'Desbanear':'Banear'}</button><button onclick="quitarAdmin('${a.id}')" class="${CHIP} text-red-700">Quitar</button></div>`}</div>`).join(''); }
   if(asec==='Diseño') b=disH();
   if(asec==='Actualizar'){
     const g=JSON.parse(localStorage.voyya_gh||'{}'), ref=new URL(SUPABASE_URL).hostname.split('.')[0];
@@ -490,7 +512,7 @@ async function vAdmin(){
     <div class="flex gap-2"><button onclick="copySql()" class="${BTN} flex-1">Copiar SQL</button><a target="_blank" rel="noopener" href="https://supabase.com/dashboard/project/${ref}/sql/new" class="${BTN2} flex-1 text-center">Abrir Supabase</a></div></div>`;
   }
   draw(`<div class="flex justify-between items-center mb-3"><h2 class="text-xl font-black">🛡️ Panel de administrador</h2><button onclick="ADM=false;go('cliente')" class="text-sm underline text-slate-500">Cerrar</button></div>
-  <div class="flex gap-2 overflow-x-auto mb-3 pb-1">${AS.map(k=>`<button onclick="asec='${k}';vAdmin()" class="shrink-0 px-4 py-2 rounded-full text-sm font-bold ${k===asec?'bg-ink text-white':'bg-white border border-black/10 text-slate-900'}">${k}</button>`).join('')}</div><div id="adm">${b}</div>`);
+  <div class="flex gap-2 overflow-x-auto mb-3 pb-1">${(PRIN?[...AS,'Admins']:AS).map(k=>`<button onclick="asec='${k}';vAdmin()" class="shrink-0 px-4 py-2 rounded-full text-sm font-bold ${k===asec?'bg-ink text-white':'bg-white border border-black/10 text-slate-900'}">${k}</button>`).join('')}</div><div id="adm">${b}</div>`);
 }
 /* Editor genérico: cualquier campo de cualquier fila */
 async function ed(t,id){
@@ -528,7 +550,7 @@ function disH(){
   const sel=(n,v,o)=>`<select name="${n}" class="${INP}">${o.map(a=>`<option value="${a[0]}" ${a[0]===v?'selected':''}>${a[1]}</option>`).join('')}</select>`;
   const col=(k,i,x)=>`<label class="flex items-center justify-between text-sm font-semibold">${x}<input type="color" name="c_${k}" value="${D.col[k]||t[i]}" class="w-14 h-10 rounded"></label>`;
   const ord=(arr,key,nm)=>arr.map((k,i)=>`<div class="flex items-center gap-2 mb-2"><button type="button" onclick="mover('${key}',${i},-1)" class="${CHIP}">↑</button><button type="button" onclick="mover('${key}',${i},1)" class="${CHIP}">↓</button><div class="flex-1">${nm(k)}</div></div>`).join('');
-  const up=k=>`<label class="${CHIP} cursor-pointer shrink-0">⬆ Subir<input type="file" accept="image/*" class="hidden" onchange="subirIco('${k}',this)"></label>`;
+  const up=k=>`<label class="${CHIP} cursor-pointer shrink-0">⬆ Subir<input type="file" accept="image/*,video/*" class="hidden" onchange="subirIco('${k}',this)"></label>`;
   return `<form id="df" onsubmit="saveDis(event)" class="space-y-3">
   <details open class="${CARD}">${summ('✏️ Textos del inicio')}<div class="space-y-2 mt-3">
     <label class="${lab}">Título de la pestaña del navegador<input name="titulo" value="${e(D.titulo)}" class="${INP}"></label>
@@ -567,7 +589,7 @@ function readDF(){
 function mover(key,i,d){ readDF(); const arr=key==='nav'?DW.nav_orden:DW.home_orden, j=i+d; if(j<0||j>=arr.length) return; [arr[i],arr[j]]=[arr[j],arr[i]]; redrawDis(); }
 async function subirIco(k,inp){
   const file=inp.files[0]; if(!file) return; readDF(); toast('Subiendo imagen…');
-  try{ DW.ico[k]=await subir(file,IMGS.some(a=>a[0]===k)?600:160,true); redrawDis(); toast('Imagen subida: pulsa Guardar diseño'); }catch(er){ toast('No se pudo subir: '+(er.message||er)); }
+  try{ DW.ico[k]=/gif|video/.test(file.type)?await subirRaw(file):await subir(file,IMGS.some(a=>a[0]===k)?600:160,true); redrawDis(); toast('Imagen subida: pulsa Guardar diseño'); }catch(er){ toast('No se pudo subir: '+(er.message||er)); }
 }
 async function subirFondo(inp){
   const file=inp.files[0]; if(!file) return; readDF(); toast('Subiendo fondo…');
@@ -652,7 +674,7 @@ const L2 = window.L; // Leaflet (la constante L de arriba son los textos de esta
   try{ await loadCfg(); await render(); booted=true; hb(); }catch(er){ fail(er); }
   setInterval(hb,30000);
   setInterval(async()=>{ if(tab==='admin'&&!editing){ if(asec==='Resumen') vAdmin(); else if(asec==='Usuarios'){ await loadPres(); document.querySelectorAll('[data-dot]').forEach(d=>{ d.className='inline-block w-3 h-3 rounded-full '+(online(d.dataset.dot)?'bg-green-500':'bg-slate-400'); }); } } },15000);
-  setTimeout(()=>{ const s=document.getElementById('splash'); s.style.opacity=0; setTimeout(()=>s.remove(),450); },900);
+  setTimeout(()=>{ const s=document.getElementById('splash'); s.style.opacity=0; setTimeout(()=>s.remove(),450); },/\.(mp4|webm|mov)(\?|$)/i.test(localStorage.voyya_splash||'')?3500:900);
 })();
 </script>
 </body>
