@@ -112,7 +112,7 @@ const _rk={}; async function rutaKm(a,b,c,d){ const k=[a,b,c,d].map(x=>x.toFixed
 function nImg(n,cls){ return n.foto?`<img src="${e(n.foto)}" loading="lazy" class="${cls} rounded-2xl object-cover">`:`<span class="${cls} rounded-2xl bg-s flex items-center justify-center text-3xl">${e(n.emoji)}</span>`; }
 function ding(){ try{ navigator.vibrate&&navigator.vibrate([200,100,200]); const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain(); o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.setValueAtTime(.25,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.6);o.start();o.stop(a.currentTime+.6); }catch{} }
 function voz(t){ try{ ding(); const u=new SpeechSynthesisUtterance(t); u.lang='es-ES'; speechSynthesis.cancel(); speechSynthesis.speak(u); if(window.Notification&&Notification.permission==='granted'&&document.hidden) new Notification('VoyYa',{body:t}); }catch{} }
-let APKS=[],ENL=[];
+let APKS=[],ENL=[],AVS=[];
 const REC=()=>{ try{ return JSON.parse(localStorage.voyya_rec||'{}'); }catch{ return {}; } };
 const ckGet=()=>{ const m=document.cookie.match(/voyya_u=([\w-]+)/); return m?m[1]:null; };
 async function upd(t,id,o){ const {error}=await sb.from(t).update(o).eq('id',id); if(error){ toast('Error: '+error.message); return false; } return true; }
@@ -205,12 +205,12 @@ function renderNav(){
   const nav=document.getElementById('nav'), top=DIS.nav_pos==='arriba';
   if(top){ document.getElementById('hdr').appendChild(nav); nav.className='max-w-xl mx-auto px-2 flex'; nav.style.paddingBottom=''; }
   else { document.body.appendChild(nav); nav.className='fixed bottom-0 inset-x-0 z-30 bg-hd flex max-w-xl mx-auto rounded-t-3xl shadow-[0_-4px_20px_#0004]'; nav.style.paddingBottom='env(safe-area-inset-bottom)'; }
-  nav.innerHTML=(ADM?['admin']:DIS.nav_orden).map(k=>`<button onclick="go('${k}')" class="flex-1 py-2.5 flex flex-col items-center gap-0.5 text-xs font-bold ${tab===k?'text-v':'text-white/60'}">${ico(k,'w-6 h-6')}${e(DIS.nav_txt[k]||k)}</button>`).join('');
+  nav.innerHTML=(ADM?['admin']:['perfil',...DIS.nav_orden]).map(k=>`<button onclick="go('${k}')" class="flex-1 py-2.5 flex flex-col items-center gap-0.5 text-xs font-bold ${tab===k?'text-v':'text-white/60'}">${k==='perfil'?'<span class="text-xl leading-6">🏠</span>':ico(k,'w-6 h-6')}${e(k==='perfil'?'Inicio':(DIS.nav_txt[k]||k))}</button>`).join('');
   lucide.createIcons();
 }
 async function render(){
   await me(); head(); renderNav();
-  ({cliente:vCliente,negocio:vNegocio,repartidor:vRepartidor,soporte:vSoporte,admin:vAdmin})[tab](); lucide.createIcons();
+  ({perfil:vPerfil,cliente:vCliente,negocio:vNegocio,repartidor:vRepartidor,soporte:vSoporte,admin:vAdmin})[tab](); lucide.createIcons();
 }
 
 /* ---------- Mapa (Leaflet + OpenStreetMap) ---------- */
@@ -225,6 +225,7 @@ function pt(k,lat,lng,label,color){
 
 /* =================== CLIENTE =================== */
 async function vCliente(){
+  if(!U) return auth('cliente',render);
   if(cv==='track'&&curTrack) return track(curTrack);
   if(cv==='neg'&&neg) return openNeg(neg.id);
   unsub(); skel(); HR=false;
@@ -562,6 +563,26 @@ function verFoto(src){ document.getElementById('lbx')?.remove(); const d=documen
   d.innerHTML=`<img src="${src}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:12px"><button style="position:absolute;top:12px;right:14px;color:#fff;font-size:30px;line-height:1" aria-label="Cerrar">✕</button>`; d.onclick=()=>d.remove(); document.body.appendChild(d); }
 document.addEventListener('click',ev=>{ const i=ev.target.closest&&ev.target.closest('img'); if(!i||i.closest('button,label,a,#lbx,#splash')||i.id==='logo'||!/\/fotos\//.test(i.src)) return; verFoto(i.src); });
 document.addEventListener('keydown',ev=>{ if(ev.key==='Escape') document.getElementById('lbx')?.remove(); });
+function perfilH(){
+  const ini=U?(()=>{ const tj=String(U.tarjeta||''), rl={cliente:'Cliente',negocio:'Dueño de negocio',repartidor:'Repartidor'}[U.rol]||U.rol;
+    return `<div class="${CARD} text-center mb-4">${U.foto?`<img src="${e(U.foto)}" class="w-28 h-28 rounded-full object-cover mx-auto border-4 border-white shadow-lg">`:`<div class="w-28 h-28 rounded-full bg-white mx-auto border-4 border-white shadow-lg flex items-center justify-center text-5xl">👤</div>`}
+      <label class="${CHIP} inline-block mt-3 cursor-pointer">📷 ${U.foto?'Cambiar foto de perfil':'Subir foto de perfil'}<input type="file" accept="image/*" class="hidden" onchange="fotoPerfil(this)"></label>
+      <h2 class="font-black text-xl mt-3">${e(U.nombre)} ${e(U.apellido)}</h2><span class="text-sm text-slate-500">${rl}</span>
+      <div class="text-left text-sm mt-3 space-y-1 border-t border-black/10 pt-3"><div>📞 Teléfono: <b>${e(U.telefono)}</b></div><div>💳 Tarjeta: <b>${tj?'•••• '+e(tj.slice(-4)):'—'}</b></div>${U.rol==='repartidor'?`<div>💰 Saldo: <b>${cup(U.saldo||0)}</b></div>`:''}</div>
+      <button onclick="salir()" class="${CHIP} mt-3 w-full">Cerrar sesión</button></div>`; })()
+   :`<div class="${CARD} text-center mb-4"><div class="text-4xl mb-1">🛵</div><b>Crea tu cuenta o entra</b><p class="text-sm text-slate-500 mb-2">Para ver tu perfil y pedir.</p><button onclick="go('cliente')" class="${BTN} w-full">Entrar o registrarme</button></div>`;
+  const apk=APKS.length?`<h3 class="font-black mb-2">📲 Descargar aplicaciones</h3>`+APKS.map(a=>`<a href="${e(a.url)}" download="${e((a.nombre||'app')+'.apk')}" class="${CARD} mb-2 flex items-center gap-3 !p-3"><span class="text-3xl">📲</span><span class="flex-1"><b class="block">${e(a.nombre)}</b><span class="text-xs text-slate-500">${a.version?'v'+e(a.version)+' · ':''}${a.tamano?(a.tamano/1048576).toFixed(1)+' MB':''}</span></span><span class="${CHIP} font-black">Descargar</span></a>`).join(''):'';
+  const av=AVS.length?`<h3 class="font-black mb-2 mt-4">🔔 Avisos</h3>`+AVS.map(a=>`<div class="${CARD} mb-2 !p-3 text-sm"><b>${e(a.titulo||'Aviso')}</b><br>${e(a.mensaje)}<div class="text-xs text-slate-400 mt-1">${new Date(a.creado).toLocaleString()}</div></div>`).join(''):'';
+  const en=ENL.length?`<h3 class="font-black mb-2 mt-4">🔗 Enlaces</h3><div class="flex gap-2 flex-wrap">${ENL.map(l=>`<a href="${e(l.url)}" target="_blank" rel="noopener" class="${CHIP} font-bold">${e(l.titulo)}</a>`).join('')}</div>`:'';
+  const pol=`<details class="${CARD} mt-4"><summary class="font-black cursor-pointer">📄 Política de la app</summary><div class="text-sm mt-2 whitespace-pre-line">${e(CFG.politica||'Aún no hay política publicada.')}</div></details>`;
+  return ini+apk+av+en+pol+'<div class="h-20"></div>';
+}
+async function vPerfil(){
+  unsub(); skel();
+  const ld=async()=>{ try{ const [a,l,v]=await Promise.all([sb.from('apks').select('*').order('creado',{ascending:false}),sb.from('enlaces').select('*').order('creado'),sb.from('avisos').select('*').gte('creado',new Date(Date.now()-7*864e5).toISOString()).order('creado',{ascending:false}).limit(10)]); APKS=a.data||[]; ENL=l.data||[]; AVS=v.data||[]; }catch{} if(tab==='perfil') draw(perfilH()); };
+  listen('pa','apks',null,ld); listen('pl','enlaces',null,ld); listen('pv','avisos',null,ld); listen('pc','config',null,ld); ld();
+}
+async function savePol(ev){ ev.preventDefault(); const {error}=await sb.from('config').upsert({clave:'politica',valor:ev.target.politica.value}); if(error) return toast(error.message); await loadCfg(); toast('Política guardada ✔'); }
 async function contenidoH(){
   const [a,v,l]=await Promise.all([sb.from('apks').select('*').order('creado',{ascending:false}),sb.from('avisos').select('*').order('creado',{ascending:false}).limit(15),sb.from('enlaces').select('*').order('creado',{ascending:false})]);
   if(a.error||v.error||l.error) return `<div class="${CARD}">Falta ejecutar el SQL nuevo de Contenido en Supabase.<br><small>${e((a.error||v.error||l.error).message)}</small></div>`;
@@ -571,7 +592,8 @@ async function contenidoH(){
   `<form onsubmit="pubAviso(event)" class="${CARD} my-3 space-y-2"><b>🔔 Notificación en tiempo real</b><input name="titulo" placeholder="Título (opcional)" class="${INP}"><textarea name="mensaje" required rows="2" placeholder="Mensaje para todos los usuarios" class="${INP}"></textarea><button class="${BTN} w-full">Publicar ahora</button></form>`+
   (v.data.map(x=>row(`<b>${e(x.titulo||'Aviso')}</b><br>${e(x.mensaje)}`,x,`delFila('avisos','${x.id}')`)).join(''))+
   `<form onsubmit="pubEnlace(event)" class="${CARD} my-3 space-y-2"><b>🔗 Enlaces en la pantalla principal</b><input name="titulo" required placeholder="Texto del botón" class="${INP}"><input name="url" required placeholder="https://..." class="${INP}"><button class="${BTN} w-full">Añadir enlace</button></form>`+
-  (l.data.map(x=>row(`<b>${e(x.titulo)}</b><br><span class="break-all text-xs">${e(x.url)}</span>`,x,`delFila('enlaces','${x.id}')`)).join(''));
+  (l.data.map(x=>row(`<b>${e(x.titulo)}</b><br><span class="break-all text-xs">${e(x.url)}</span>`,x,`delFila('enlaces','${x.id}')`)).join(''))+
+  `<form onsubmit="savePol(event)" class="${CARD} my-3 space-y-2"><b>📄 Política de la app</b><textarea name="politica" rows="8" placeholder="Escribe aquí la política (se muestra desplegable en la pantalla Inicio)" class="${INP}">${e(CFG.politica||'')}</textarea><button class="${BTN} w-full">Guardar política</button></form>`;
 }
 async function subirApk(ev){ ev.preventDefault(); const f=ev.target, b=f.querySelector('button'); b.disabled=true;
   for(const file of f.file.files){ try{ toast('Subiendo '+file.name+'...'); const ruta=Date.now()+'_'+file.name.replace(/[^\w.-]/g,'_');
