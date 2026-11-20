@@ -112,6 +112,7 @@ const _rk={}; async function rutaKm(a,b,c,d){ const k=[a,b,c,d].map(x=>x.toFixed
 function nImg(n,cls){ return n.foto?`<img src="${e(n.foto)}" loading="lazy" class="${cls} rounded-2xl object-cover">`:`<span class="${cls} rounded-2xl bg-s flex items-center justify-center text-3xl">${e(n.emoji)}</span>`; }
 function ding(){ try{ navigator.vibrate&&navigator.vibrate([200,100,200]); const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain(); o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.setValueAtTime(.25,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.6);o.start();o.stop(a.currentTime+.6); }catch{} }
 function voz(t){ try{ ding(); const u=new SpeechSynthesisUtterance(t); u.lang='es-ES'; speechSynthesis.cancel(); speechSynthesis.speak(u); if(window.Notification&&Notification.permission==='granted'&&document.hidden) new Notification('VoyYa',{body:t}); }catch{} }
+let APKS=[],ENL=[];
 const REC=()=>{ try{ return JSON.parse(localStorage.voyya_rec||'{}'); }catch{ return {}; } };
 const ckGet=()=>{ const m=document.cookie.match(/voyya_u=([\w-]+)/); return m?m[1]:null; };
 async function upd(t,id,o){ const {error}=await sb.from(t).update(o).eq('id',id); if(error){ toast('Error: '+error.message); return false; } return true; }
@@ -231,9 +232,10 @@ async function vCliente(){
     const [r1,r2]=await Promise.all([sb.from('negocios').select('*').eq('activo',true).order('nombre'),
       U?sb.from('pedidos').select('id,estado,total,negocios(nombre,emoji)').eq('cliente_id',U.id).eq('oculto_cliente',false).order('creado',{ascending:false}).limit(6):Promise.resolve({data:[]})]);
     if(r1.error) return fail(r1.error); NEGS=r1.data; MIS=r2.data||[]; HR=true;
+    try{ const [a,l]=await Promise.all([sb.from('apks').select('*').order('creado',{ascending:false}),sb.from('enlaces').select('*').order('creado')]); APKS=a.data||[]; ENL=l.data||[]; }catch{}
     if(tab==='cliente'&&cv==='home') drawHome();
   };
-  listen('cn','negocios',null,load); if(U) listen('cp','pedidos',`cliente_id=eq.${U.id}`,load); load();
+  listen('cn','negocios',null,load); listen('ca','apks',null,load); listen('cl','enlaces',null,load); if(U) listen('cp','pedidos',`cliente_id=eq.${U.id}`,load); load();
 }
 function drawHome(){
   const cats=[...new Set(NEGS.map(n=>n.categoria))], sec=x=>x?`<section class="mb-5">${x}</section>`:'';
@@ -242,7 +244,8 @@ function drawHome(){
     pedidos:MIS.length?`<h3 class="font-black mb-2">Mis pedidos</h3><div class="flex gap-2 overflow-x-auto pb-1">${MIS.map(p=>`<button onclick="track('${p.id}')" class="shrink-0 ${CARD} !p-3 text-left min-w-[150px]"><div class="text-sm font-bold">${e(p.negocios?.emoji||'📦')} ${e(p.negocios?.nombre||'Pedido')}</div>${tag(p.estado)}<div class="text-xs text-slate-500 mt-1">${cup(p.total)}</div>${FIN.includes(p.estado)?`<span onclick="event.stopPropagation();ocultarPed('${p.id}')" class="text-xs text-red-700 font-bold underline">🗑 Eliminar</span>`:''}</button>`).join('')}</div>`:'',
     buscar:`<input id="q" value="${e(fq)}" oninput="fq=this.value;lst()" placeholder="🔍 Buscar negocio" class="${INP}"><div class="flex gap-2 overflow-x-auto my-3">${['',...cats].map(c=>`<button data-c="${e(c)}" onclick="fc=this.dataset.c;drawHome()" class="shrink-0 px-4 py-1.5 rounded-full text-sm font-bold ${fc===c?'bg-ink text-white':'bg-white border border-black/10 text-slate-900'}">${e(c)||'Todos'}</button>`).join('')}</div><div id="lst"></div>`
   };
-  draw(DIS.home_orden.map(k=>sec(P[k])).join('')); lst();
+  const extrasH=(APKS.length?`<h3 class="font-black mb-2">📲 Descargar aplicaciones</h3>`+APKS.map(a=>`<a href="${e(a.url)}" download="${e((a.nombre||'app')+'.apk')}" class="${CARD} mb-2 flex items-center gap-3 !p-3 active:scale-[.98]"><span class="text-3xl">📲</span><span class="flex-1"><b class="block">${e(a.nombre)}</b><span class="text-xs text-slate-500">${a.version?'v'+e(a.version)+' · ':''}${a.tamano?(a.tamano/1048576).toFixed(1)+' MB':''}</span></span><span class="${CHIP} font-black">Descargar</span></a>`).join(''):'')+(ENL.length?`<h3 class="font-black mb-2 mt-3">🔗 Enlaces</h3><div class="flex gap-2 flex-wrap">${ENL.map(l=>`<a href="${e(l.url)}" target="_blank" rel="noopener" class="${CHIP} font-bold">${e(l.titulo)}</a>`).join('')}</div>`:'');
+  const parts=DIS.home_orden.map(k=>sec(P[k])); parts.splice(1,0,sec(extrasH)); draw(parts.join('')); lst();
 }
 function lst(){
   const box=document.getElementById('lst'); if(!box) return; const q=fq.toLowerCase();
@@ -461,7 +464,7 @@ async function admin(){
 }
 async function addAdmin(ev){ ev.preventDefault(); const f=fd(ev.target); const {error}=await sb.from('admins').insert({nombre:f.nombre,telefono:f.telefono.replace(/\D/g,''),clave:f.clave}); if(error) return toast(error.message); toast('Administrador añadido'); vAdmin(); }
 async function quitarAdmin(id){ if(!confirm('¿Quitar este administrador?')) return; const {error}=await sb.from('admins').delete().eq('id',id); if(error) toast(error.message); vAdmin(); }
-const AS=['Resumen','Usuarios','Negocios','Productos','Pedidos','Recargas','Soporte','Diseño','Ajustes','Actualizar'];
+const AS=['Resumen','Usuarios','Negocios','Productos','Pedidos','Recargas','Soporte','Contenido','Diseño','Ajustes','Actualizar'];
 const TB={Resumen:['pedidos','usuarios','recargas','soporte'],Usuarios:['usuarios'],Negocios:['negocios'],Productos:['productos'],Pedidos:['pedidos'],Recargas:['recargas'],Soporte:['soporte'],Ajustes:[],Admins:['admins'],Actualizar:[],Diseño:[]};
 const online=id=>PR[id]&&Date.now()-new Date(PR[id])<75000;
 const dotH=id=>`<span data-dot="${id}" class="inline-block w-3 h-3 rounded-full ${online(id)?'bg-green-500':'bg-slate-400'}"></span>`;
@@ -510,6 +513,7 @@ async function vAdmin(){
     <label class="text-sm font-semibold">Tema de colores<select name="tema" class="${INP}">${Object.keys(TEMAS).map(k=>`<option ${k===CFG.tema?'selected':''}>${k}</option>`).join('')}</select></label>
     <button class="${BTN} w-full">Guardar ajustes</button></form>`;
   if(asec==='Admins'&&PRIN){ const {data:ad}=await sb.from('admins').select('*').order('creado'); b=`<form onsubmit="addAdmin(event)" class="${CARD} mb-3 space-y-2"><b>Añadir administrador</b><input name="nombre" required placeholder="Nombre" class="${INP}"><input name="telefono" required inputmode="tel" placeholder="Teléfono" class="${INP}"><input name="clave" required minlength="4" placeholder="Clave" class="${INP}"><button class="${BTN} w-full">Añadir</button></form>`+(ad||[]).map(a=>`<div class="${CARD} mb-2 text-sm"><b>${e(a.nombre)}</b> · ${a.principal?'👑 Principal (no se puede quitar ni banear)':e(a.telefono)}${a.baneado?' 🚫':''}${a.principal?'':`<div class="flex gap-2 mt-2"><button onclick="upd('admins','${a.id}',{baneado:${!a.baneado}}).then(vAdmin)" class="${CHIP}">${a.baneado?'Desbanear':'Banear'}</button><button onclick="quitarAdmin('${a.id}')" class="${CHIP} text-red-700">Quitar</button></div>`}</div>`).join(''); }
+  if(asec==='Contenido') b=await contenidoH();
   if(asec==='Diseño') b=disH();
   if(asec==='Actualizar'){
     const g=JSON.parse(localStorage.voyya_gh||'{}'), ref=new URL(SUPABASE_URL).hostname.split('.')[0];
@@ -558,6 +562,39 @@ function verFoto(src){ document.getElementById('lbx')?.remove(); const d=documen
   d.innerHTML=`<img src="${src}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:12px"><button style="position:absolute;top:12px;right:14px;color:#fff;font-size:30px;line-height:1" aria-label="Cerrar">✕</button>`; d.onclick=()=>d.remove(); document.body.appendChild(d); }
 document.addEventListener('click',ev=>{ const i=ev.target.closest&&ev.target.closest('img'); if(!i||i.closest('button,label,a,#lbx,#splash')||i.id==='logo'||!/\/fotos\//.test(i.src)) return; verFoto(i.src); });
 document.addEventListener('keydown',ev=>{ if(ev.key==='Escape') document.getElementById('lbx')?.remove(); });
+async function contenidoH(){
+  const [a,v,l]=await Promise.all([sb.from('apks').select('*').order('creado',{ascending:false}),sb.from('avisos').select('*').order('creado',{ascending:false}).limit(15),sb.from('enlaces').select('*').order('creado',{ascending:false})]);
+  if(a.error||v.error||l.error) return `<div class="${CARD}">Falta ejecutar el SQL nuevo de Contenido en Supabase.<br><small>${e((a.error||v.error||l.error).message)}</small></div>`;
+  const row=(t,x,del)=>`<div class="${CARD} mb-2 !p-3 flex items-center gap-2"><div class="flex-1 text-sm">${t}</div><button onclick="${del}" class="${CHIP} text-red-700">Quitar</button></div>`;
+  return `<form onsubmit="subirApk(event)" class="${CARD} mb-3 space-y-2"><b>📲 Subir aplicaciones (APK)</b><input name="nombre" placeholder="Nombre (opcional)" class="${INP}"><input name="version" placeholder="Versión (opcional)" class="${INP}"><input name="file" type="file" accept=".apk,application/vnd.android.package-archive" multiple required class="text-sm w-full"><button class="${BTN} w-full">Subir</button></form>`+
+  (a.data.map(x=>row(`<b>${e(x.nombre)}</b> ${x.version?'v'+e(x.version):''} · ${x.tamano?(x.tamano/1048576).toFixed(1)+' MB':''}`,x,`delApk('${x.id}','${e(x.ruta)}')`)).join('')||`<p class="text-slate-500 text-sm mb-3">No hay APK subidas.</p>`)+
+  `<form onsubmit="pubAviso(event)" class="${CARD} my-3 space-y-2"><b>🔔 Notificación en tiempo real</b><input name="titulo" placeholder="Título (opcional)" class="${INP}"><textarea name="mensaje" required rows="2" placeholder="Mensaje para todos los usuarios" class="${INP}"></textarea><button class="${BTN} w-full">Publicar ahora</button></form>`+
+  (v.data.map(x=>row(`<b>${e(x.titulo||'Aviso')}</b><br>${e(x.mensaje)}`,x,`delFila('avisos','${x.id}')`)).join(''))+
+  `<form onsubmit="pubEnlace(event)" class="${CARD} my-3 space-y-2"><b>🔗 Enlaces en la pantalla principal</b><input name="titulo" required placeholder="Texto del botón" class="${INP}"><input name="url" required placeholder="https://..." class="${INP}"><button class="${BTN} w-full">Añadir enlace</button></form>`+
+  (l.data.map(x=>row(`<b>${e(x.titulo)}</b><br><span class="break-all text-xs">${e(x.url)}</span>`,x,`delFila('enlaces','${x.id}')`)).join(''));
+}
+async function subirApk(ev){ ev.preventDefault(); const f=ev.target, b=f.querySelector('button'); b.disabled=true;
+  for(const file of f.file.files){ try{ toast('Subiendo '+file.name+'...'); const ruta=Date.now()+'_'+file.name.replace(/[^\w.-]/g,'_');
+    const {error}=await sb.storage.from('apks').upload(ruta,file,{contentType:'application/vnd.android.package-archive'}); if(error) throw error;
+    const url=sb.storage.from('apks').getPublicUrl(ruta).data.publicUrl;
+    const {error:e2}=await sb.from('apks').insert({nombre:(f.nombre.value.trim()&&f.file.files.length===1)?f.nombre.value.trim():file.name.replace(/\.apk$/i,''),version:f.version.value.trim()||null,url,ruta,tamano:file.size}); if(e2) throw e2;
+  }catch(er){ toast('Error: '+(er.message||er)); } }
+  b.disabled=false; toast('APK subidas ✔'); vAdmin(); }
+async function delApk(id,ruta){ if(!confirm('¿Quitar esta APK?')) return; try{ await sb.storage.from('apks').remove([ruta]); }catch{} await sb.from('apks').delete().eq('id',id); toast('APK quitada'); vAdmin(); }
+async function delFila(t,id){ await sb.from(t).delete().eq('id',id); vAdmin(); }
+async function pubAviso(ev){ ev.preventDefault(); const f=ev.target; const {error}=await sb.from('avisos').insert({titulo:f.titulo.value.trim()||null,mensaje:f.mensaje.value.trim()}); if(error) return toast(error.message); toast('Notificación enviada ✔'); vAdmin(); }
+async function pubEnlace(ev){ ev.preventDefault(); const f=ev.target; let u=f.url.value.trim(); if(!/^https?:\/\//i.test(u)) u='https://'+u; const {error}=await sb.from('enlaces').insert({titulo:f.titulo.value.trim(),url:u}); if(error) return toast(error.message); toast('Enlace añadido ✔'); vAdmin(); }
+function burbuja(a){ let ya=[]; try{ ya=JSON.parse(localStorage.voyya_av||'[]'); }catch{} if(ya.includes(a.id)||document.querySelector('[data-av="'+a.id+'"]')) return;
+  const n=document.querySelectorAll('.avb').length, d=document.createElement('div'); d.className='avb'; d.dataset.av=a.id;
+  d.style.cssText='position:fixed;z-index:9998;left:'+Math.max(8,(innerWidth-Math.min(innerWidth*.88,360))/2)+'px;top:'+(76+n*14)+'px;width:min(88vw,360px);touch-action:none;background:linear-gradient(135deg,#FFC400,#fb923c);color:#1a1a1a;border-radius:24px;padding:14px 40px 14px 16px;box-shadow:0 12px 32px rgba(0,0,0,.35);font-size:14px;cursor:grab;user-select:none';
+  d.innerHTML='<b style="display:block;margin-bottom:2px">'+e(a.titulo||'📢 Aviso')+'</b><div>'+e(a.mensaje)+'</div><button aria-label="Cerrar" style="position:absolute;top:8px;right:12px;font-size:22px;line-height:1">✕</button>';
+  d.querySelector('button').onclick=()=>{ ya.push(a.id); try{ localStorage.voyya_av=JSON.stringify(ya.slice(-60)); }catch{} d.remove(); };
+  let ox=0,oy=0,mv=false; d.onpointerdown=ev=>{ if(ev.target.tagName==='BUTTON') return; mv=true; ox=ev.clientX-d.offsetLeft; oy=ev.clientY-d.offsetTop; d.setPointerCapture(ev.pointerId); d.style.cursor='grabbing'; };
+  d.onpointermove=ev=>{ if(!mv) return; d.style.left=Math.min(Math.max(0,ev.clientX-ox),innerWidth-60)+'px'; d.style.top=Math.min(Math.max(0,ev.clientY-oy),innerHeight-40)+'px'; }; d.onpointerup=()=>{ mv=false; d.style.cursor='grab'; };
+  document.body.appendChild(d); try{ navigator.vibrate&&navigator.vibrate(150); }catch{} }
+async function iniciarAvisos(){ try{ const {data}=await sb.from('avisos').select('*').gte('creado',new Date(Date.now()-3*864e5).toISOString()).order('creado'); (data||[]).forEach(burbuja);
+  sb.channel('avisos_tr').on('postgres_changes',{event:'INSERT',schema:'public',table:'avisos'},p=>burbuja(p.new)).on('postgres_changes',{event:'DELETE',schema:'public',table:'avisos'},p=>{ const x=p.old&&document.querySelector('[data-av="'+p.old.id+'"]'); x&&x.remove(); }).subscribe(); }catch{} }
+setTimeout(iniciarAvisos,1500);
 async function quitFoto(t,id){ if(!confirm('¿Quitar esta foto?')) return; const fs=await fotosDe(t,id); if(await upd(t,id,{foto:null})){ for(const f of fs) await borrarFoto(f); toast('Foto eliminada del almacén'); vAdmin(); } }
 async function fotoPerfil(inp){ const fl=inp.files[0]; if(!fl) return; try{ const old=U.foto, u=await subir(fl,300); if(await upd('usuarios',U.id,{foto:u})){ await borrarFoto(old); U.foto=u; toast('Foto de perfil guardada'); render(); } }catch{ toast('No se pudo subir la foto'); } }
 async function aprobar(id){
