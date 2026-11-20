@@ -158,7 +158,7 @@ async function hb(){ // latido: marca "conectado" y cierra sesión si te banean 
 }
 function salir(){ localStorage.removeItem('voyya_u'); document.cookie='voyya_u=;max-age=0;path=/'; stopGPS(); U=null; go('cliente'); }
 function head(){
-  document.getElementById('hr').innerHTML=(U?`<label class="flex items-center gap-1 text-xs text-white/70 cursor-pointer">${U.foto?`<img src="${e(U.foto)}" class="w-7 h-7 rounded-full object-cover">`:'📷'} ${e(U.nombre)}<input type="file" accept="image/*" class="hidden" onchange="fotoPerfil(this)"></label><button onclick="salir()" class="text-xs underline text-white/70">Salir</button>`:'')+`<button onclick="U?go('soporte'):toast('Inicia sesión para escribir a soporte')" class="p-2 text-white" aria-label="Soporte">${ico('soporte','w-5 h-5')}</button>`;
+  document.getElementById('hr').innerHTML=(U?`<label class="flex items-center gap-2 text-xs text-white/70 cursor-pointer">${U.foto?`<img src="${e(U.foto)}" class="w-8 h-8 rounded-full object-cover"> ${e(U.nombre)}`:`<span class="flex flex-col items-center leading-none"><span class="w-8 h-8 rounded-full bg-white"></span><span class="text-[9px] mt-0.5 whitespace-nowrap">Subir foto de perfil</span></span> ${e(U.nombre)}`}<input type="file" accept="image/*" class="hidden" onchange="fotoPerfil(this)"></label><button onclick="salir()" class="text-xs underline text-white/70">Salir</button>`:'')+`<button onclick="U?go('soporte'):toast('Inicia sesión para escribir a soporte')" class="p-2 text-white" aria-label="Soporte">${ico('soporte','w-5 h-5')}</button>`;
   lucide.createIcons();
 }
 
