@@ -68,7 +68,10 @@ const BTN='bg-v text-vt rounded-[var(--rb)] px-4 py-3 font-bold shadow active:sc
 const INP='w-full border-2 border-black/10 rounded-[var(--ri)] px-4 py-3 bg-white text-slate-900', CARD='bg-white rounded-[var(--rc)] p-4 shadow-md border border-black/5 text-slate-900 fade', CHIP='px-3 py-1.5 rounded-[var(--rb)] border border-black/15 text-sm font-semibold bg-white text-slate-900 active:scale-95';
 const TEMAS = { // [primario, texto sobre primario, resalte, texto, fondo, cabecera]
   moto:['#FFC400','#1A1A1A','#FFE58A','#1A1A1A','#FFF8E1','#141414'], verde:['#0E9F6E','#FFFFFF','#FDE68A','#0F2A22','#F0FAF5','#0B3D2E'],
-  azul:['#2563EB','#FFFFFF','#FDE68A','#0F172A','#EFF4FF','#0B1B4D'], rosa:['#DB2777','#FFFFFF','#FDE68A','#2A0F1C','#FFF1F7','#4A0D2A'], morado:['#7C3AED','#FFFFFF','#FDE68A','#1E1B4B','#F5F3FF','#2E1065']};
+  azul:['#2563EB','#FFFFFF','#FDE68A','#0F172A','#EFF4FF','#0B1B4D'], rosa:['#DB2777','#FFFFFF','#FDE68A','#2A0F1C','#FFF1F7','#4A0D2A'], morado:['#7C3AED','#FFFFFF','#FDE68A','#1E1B4B','#F5F3FF','#2E1065'],
+  naranja:['#F97316','#FFFFFF','#FED7AA','#2B1405','#FFF4EA','#431407'], rojo:['#DC2626','#FFFFFF','#FDE68A','#2A0A0A','#FEF2F2','#450A0A'],
+  turquesa:['#0D9488','#FFFFFF','#FDE68A','#042F2E','#F0FDFA','#134E4A'], cielo:['#0EA5E9','#FFFFFF','#FEF08A','#082F49','#F0F9FF','#0C4A6E'],
+  dorado:['#CA8A04','#FFFFFF','#FEF08A','#2B2105','#FEFCE8','#422006'], noche:['#FACC15','#111111','#FEF08A','#F1F5F9','#0F172A','#020617']};
 const CFG = {tarifa_km:'150',comision:'10',tarjeta:'',telefono:'',aviso:'',tema:'moto',aprobar_clientes:'no',aprobar_negocios:'si',aprobar_repartidores:'si',pago_transferencia:'si',pago_efectivo:'si',pausa:'no',envio_min:'0'};
 /* ---- Diseño personalizable (se guarda en config.diseno y se aplica a todos en tiempo real) ---- */
 const RB={cuadrado:'4px',suave:'10px',redondo:'16px',pildora:'9999px'}, RC={cuadrado:'6px',suave:'14px',redondo:'24px'};
@@ -109,6 +112,7 @@ const _rk={}; async function rutaKm(a,b,c,d){ const k=[a,b,c,d].map(x=>x.toFixed
 function nImg(n,cls){ return n.foto?`<img src="${e(n.foto)}" loading="lazy" class="${cls} rounded-2xl object-cover">`:`<span class="${cls} rounded-2xl bg-s flex items-center justify-center text-3xl">${e(n.emoji)}</span>`; }
 function ding(){ try{ navigator.vibrate&&navigator.vibrate([200,100,200]); const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain(); o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.setValueAtTime(.25,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.6);o.start();o.stop(a.currentTime+.6); }catch{} }
 function voz(t){ try{ ding(); const u=new SpeechSynthesisUtterance(t); u.lang='es-ES'; speechSynthesis.cancel(); speechSynthesis.speak(u); if(window.Notification&&Notification.permission==='granted'&&document.hidden) new Notification('VoyYa',{body:t}); }catch{} }
+const REC=()=>{ try{ return JSON.parse(localStorage.voyya_rec||'{}'); }catch{ return {}; } };
 const ckGet=()=>{ const m=document.cookie.match(/voyya_u=([\w-]+)/); return m?m[1]:null; };
 async function upd(t,id,o){ const {error}=await sb.from(t).update(o).eq('id',id); if(error){ toast('Error: '+error.message); return false; } return true; }
 
@@ -154,7 +158,7 @@ async function hb(){ // latido: marca "conectado" y cierra sesión si te banean 
 }
 function salir(){ localStorage.removeItem('voyya_u'); document.cookie='voyya_u=;max-age=0;path=/'; stopGPS(); U=null; go('cliente'); }
 function head(){
-  document.getElementById('hr').innerHTML=(U?`<span class="text-xs text-white/70">${e(U.nombre)}</span><button onclick="salir()" class="text-xs underline text-white/70">Salir</button>`:'')+`<button onclick="U?go('soporte'):toast('Inicia sesión para escribir a soporte')" class="p-2 text-white" aria-label="Soporte">${ico('soporte','w-5 h-5')}</button>`;
+  document.getElementById('hr').innerHTML=(U?`<label class="flex items-center gap-1 text-xs text-white/70 cursor-pointer">${U.foto?`<img src="${e(U.foto)}" class="w-7 h-7 rounded-full object-cover">`:'📷'} ${e(U.nombre)}<input type="file" accept="image/*" class="hidden" onchange="fotoPerfil(this)"></label><button onclick="salir()" class="text-xs underline text-white/70">Salir</button>`:'')+`<button onclick="U?go('soporte'):toast('Inicia sesión para escribir a soporte')" class="p-2 text-white" aria-label="Soporte">${ico('soporte','w-5 h-5')}</button>`;
   lucide.createIcons();
 }
 
@@ -164,9 +168,9 @@ function auth(rol,done){
   const draw1=()=>{
     draw(`<form class="${CARD} space-y-3"><div class="text-center"><img src="${imgSlot('logo')}" class="w-20 h-20 rounded-3xl object-cover mx-auto shadow-lg" alt=""><h2 class="font-black text-xl mt-2">${reg?'Crear cuenta':'Entrar'}</h2><p class="text-sm text-slate-500">${R[rol]}</p></div>`+
     (reg?`<input name="nombre" required placeholder="Nombre" class="${INP}"><input name="apellido" required placeholder="Apellido" class="${INP}">`:'')+
-    `<input name="telefono" required inputmode="tel" placeholder="Número de teléfono" class="${INP}">`+
+    `<input name="telefono" required inputmode="tel" value="${e(reg?'':(REC().t||''))}" placeholder="Número de teléfono" class="${INP}">`+
     (reg?`<input name="tarjeta" required inputmode="numeric" placeholder="Número de tarjeta" class="${INP}">`:'')+
-    `<input name="clave" required type="password" placeholder="Clave (mínimo 4 caracteres)" class="${INP}">`+
+    `<input name="clave" required type="password" value="${e(reg?'':(REC().c||''))}" placeholder="Clave (mínimo 4 caracteres)" class="${INP}">${reg?'':`<label class="text-sm flex items-center gap-2"><input type="checkbox" name="rec" ${REC().c?'checked':''}> Recordar mi clave en este teléfono</label>`}`+
     (reg&&rol==='negocio'?`<input name="negocio" required placeholder="Nombre del negocio" class="${INP}"><input name="categoria" placeholder="Categoría (pizzería, cafetería...)" class="${INP}"><input name="emoji" placeholder="Emoji 🍕 (si no subes foto)" class="${INP}"><input name="servicio" placeholder="Tipo de servicio (opcional)" class="${INP}"><label class="text-sm font-semibold">Foto del negocio (opcional)<input name="foto" type="file" accept="image/*" class="text-sm w-full"></label>`:'')+
     `<button class="${BTN} w-full">${reg?'Registrarme':'Entrar'}</button><button type="button" id="sw" class="text-sm underline text-slate-500 w-full">${reg?'Ya tengo cuenta':'No tengo cuenta: registrarme'}</button></form>`);
     app.querySelector('#sw').onclick=()=>{reg=!reg;draw1()};
@@ -184,6 +188,7 @@ function auth(rol,done){
         if(rol!=='cliente'&&data.rol!==rol){ b.disabled=false; return toast('Esta cuenta es de '+data.rol); } u=data;
       }
       if(u.aprobado===false) return pend(u,done);
+      try{ if(!reg){ if(f.rec) localStorage.voyya_rec=JSON.stringify({t:tel,c:f.clave}); else localStorage.removeItem('voyya_rec'); } }catch{}
       localStorage.voyya_u=u.id; document.cookie='voyya_u='+u.id+';max-age=31536000;path=/;SameSite=Lax'; try{ navigator.storage&&navigator.storage.persist&&navigator.storage.persist(); window.Notification&&Notification.requestPermission(); }catch{} U=u; meT=Date.now(); hb(); done();
     };
   }; draw1();
@@ -340,12 +345,12 @@ async function vNegocio(){
     listen('mp','productos',`negocio_id=eq.${n.id}`,load); return load();
   }
   const load=async()=>{
-    const {data}=await sb.from('pedidos').select('*').eq('negocio_id',n.id).order('creado',{ascending:false}).limit(30);
+    const {data}=await sb.from('pedidos').select('*').eq('negocio_id',n.id).eq('oculto_negocio',false).order('creado',{ascending:false}).limit(30);
     draw(head+(data?.length?data.map(p=>`<div class="${CARD} mb-3"><div class="flex justify-between items-center"><b>${e(p.cliente_nombre)}</b>${tag(p.estado)}</div>
       <div class="text-sm text-slate-600 my-2">${p.items.map(i=>`${i.q} × ${e(i.n)}`).join('<br>')}${p.nota?`<br><i>📝 ${e(p.nota)}</i>`:''}</div><div class="font-black mb-2">${cup(p.subtotal)}</div>
       ${p.metodo_pago==='transferencia'?`<div class="text-sm mb-2">💳 Transferencia · ref <b>${e(p.pago_ref)}</b> · ${p.pago_estado==='confirmado'?'✅ pago confirmado':'⏳ verifica en tu tarjeta'}</div>${p.pago_estado==='esperando'?`<button onclick="upd('pedidos','${p.id}',{pago_estado:'confirmado'}).then(render)" class="${CHIP} w-full mb-2">✔ Ya recibí el pago</button>`:''}`:(p.metodo_pago==='efectivo'?`<div class="text-sm mb-2">💵 Efectivo al recibir${p.paga_con?` · paga con ${cup(p.paga_con)}`:''}</div>`:'')}
       ${p.estado==='pendiente'?`<div class="flex gap-2"><button ${p.pago_estado==='esperando'?'disabled':''} onclick="setEst('${p.id}','preparando')" class="${BTN} flex-1">Aceptar</button><button onclick="setEst('${p.id}','rechazado')" class="flex-1 rounded-2xl border-2 border-red-300 text-red-700 font-bold">Rechazar</button></div>`:''}
-      ${p.estado==='preparando'?`<button onclick="setEst('${p.id}','listo')" class="${BTN} w-full">Marcar listo para recoger</button>`:''}</div>`).join(''):`<div class="text-center text-slate-500 py-8"><div class="text-4xl">${ico('vacio_pedidos','w-10 h-10')}</div>Todavía no hay pedidos. Aparecerán aquí al instante.</div>`));
+      ${p.estado==='preparando'?`<button onclick="setEst('${p.id}','listo')" class="${BTN} w-full">Marcar listo para recoger</button>`:''}${FIN.includes(p.estado)?`<button onclick="upd('pedidos','${p.id}',{oculto_negocio:true}).then(render)" class="${CHIP} w-full mt-2 text-red-700">🗑 Eliminar de mi historial</button>`:''}</div>`).join(''):`<div class="text-center text-slate-500 py-8"><div class="text-4xl">${ico('vacio_pedidos','w-10 h-10')}</div>Todavía no hay pedidos. Aparecerán aquí al instante.</div>`));
   };
   listen('np','pedidos',`negocio_id=eq.${n.id}`,p=>{ if(p.eventType==='INSERT') voz('Pedido disponible'); load(); }); load();
 }
@@ -353,8 +358,8 @@ async function setEst(id,est){ if(await upd('pedidos',id,{estado:est})) render()
 async function toggAb(id,v){ if(await upd('negocios',id,{abierto:v})) render(); }
 async function togProd(id,v){ if(await upd('productos',id,{disponible:v})) render(); }
 async function editPrecio(id,old){ const v=prompt('Nuevo precio (CUP)',old); if(v!==null&&v!==''&&!isNaN(+v)&&await upd('productos',id,{precio:+v})) render(); }
-async function delProd(id){ if(!confirm('¿Borrar este producto?')) return; const {error}=await sb.from('productos').delete().eq('id',id); if(error) toast(error.message); render(); }
-async function fotoNeg(id,inp){ const fl=inp.files[0]; if(!fl) return; try{ const u=await subir(fl,600); if(await upd('negocios',id,{foto:u})){ toast('Foto actualizada'); render(); } }catch{ toast('No se pudo subir la foto'); } }
+async function delProd(id){ if(!confirm('¿Borrar este producto?')) return; const fs=await fotosDe('productos',id); const {error}=await sb.from('productos').delete().eq('id',id); if(error) toast(error.message); else for(const f of fs) await borrarFoto(f); render(); }
+async function fotoNeg(id,inp){ const fl=inp.files[0]; if(!fl) return; try{ const old=(await fotosDe('negocios',id))[0], u=await subir(fl,600); if(await upd('negocios',id,{foto:u})){ await borrarFoto(old); toast('Foto actualizada'); render(); } }catch{ toast('No se pudo subir la foto'); } }
 async function servNeg(id){ const v=prompt('Tipo de servicio (opcional). Ej: Comida a domicilio'); if(v===null) return; if(await upd('negocios',id,{servicio:v.trim()||null})){ toast('Guardado'); render(); } }
 function setLoc(id){ gps(async c=>{ if(await upd('negocios',id,{lat:c.latitude,lng:c.longitude})){ toast('Ubicación guardada'); render(); } }); }
 async function subir(file,max=700,keep=false){ // comprime para conexiones lentas; keep=true conserva PNG (transparencia)
@@ -384,7 +389,7 @@ async function vRepartidor(){
     if(act&&shownAct===act.id){ const s=document.getElementById('saldo'); if(s) s.textContent=cup(saldo); return; }
     const top=`<div class="${CARD} mb-3"><div class="flex justify-between items-center"><span class="font-semibold">Saldo prepago</span><b id="saldo" class="text-2xl ${saldo<com?'text-red-600':''}">${cup(saldo)}</b></div>
       <p class="text-xs text-slate-500 mb-3">Cada entrega descuenta ${cup(com)} · Hoy: ${(hist||[]).length} entregas, ${cup(gan)} en envíos</p>
-      <div class="text-xs font-bold mb-1">Comprar paquete</div><div class="flex gap-2">${[250,500,1000].map(m=>`<button onclick="comprar(${m})" class="${CHIP} flex-1 !py-2.5 font-black">${m}</button>`).join('')}</div><div id="pk"></div></div>`;
+      <div class="text-xs font-bold mb-1">Comprar paquete</div><div class="flex gap-2">${String(CFG.paquetes||'250,500,1000').split(',').map(Number).filter(Boolean).map(m=>`<button onclick="comprar(${m})" class="${CHIP} flex-1 !py-2.5 font-black">${m}</button>`).join('')}</div><div id="pk"></div></div>`;
     if(act){
       shownAct=act.id;
       draw(top+`<div class="${CARD}"><b class="text-lg">🛵 Entrega en curso</b><p class="text-sm text-slate-500 mb-2">GPS activo: se comparte tu ubicación cada 5 s.</p><p><b>Recoge:</b> ${e(act.negocios?.nombre)}</p><p><b>Entrega a:</b> ${e(act.cliente_nombre)} · ${e(act.cliente_tel)}</p><p><b>Dirección:</b> ${e(act.direccion)}</p>${act.nota?`<p><b>Nota:</b> ${e(act.nota)}</p>`:''}
@@ -486,13 +491,14 @@ async function vAdmin(){
       <div class="flex gap-2 mt-2 flex-wrap">${z.aprobado===false?`<button onclick="aprobarU('${z.id}')" class="${CHIP} !bg-v !text-vt font-black">✔ Aprobar</button>`:''}<button onclick="ban('${z.id}',${!z.baneado})" class="${CHIP}">${z.baneado?'Desbanear':'Banear'}</button>${z.rol==='repartidor'?[250,500,1000].map(m=>`<button onclick="sal('${z.id}',${m})" class="${CHIP}">+${m}</button>`).join(''):''}
       <button onclick="ed('usuarios','${z.id}')" class="${CHIP}">Editar</button><button onclick="del('usuarios','${z.id}')" class="${CHIP} text-red-700">Eliminar</button></div></div>`).join('')||`<p class="text-slate-500 text-center py-6">Nadie en esta lista</p>`);
   }
-  if(asec==='Negocios') b=await lista('negocios',n=>`${e(n.emoji)} <b>${e(n.nombre)}</b> · ${e(n.categoria)} · ${n.activo?'✅ activo':'⏳ pendiente'} · ${n.abierto===false?'cerrado':'abierto'}<br>${n.lat!=null?'Ubicación fijada':'Sin ubicación'}`,n=>`<button onclick="togNeg('${n.id}',${!n.activo})" class="${CHIP} ${n.activo?'':'!bg-v !text-vt font-black'}">${n.activo?'Desactivar':'✔ Aprobar'}</button>`);
-  if(asec==='Productos') b=await lista('productos',p=>`${p.foto?`<img src="${e(p.foto)}" class="w-12 h-12 rounded-xl object-cover inline-block mr-2 align-middle">`:''}<b>${e(p.nombre)}</b> · ${cup(p.precio)} · ${p.disponible?'disponible':'agotado'}`);
+  if(asec==='Negocios') b=await lista('negocios',n=>`${nImg(n,'w-10 h-10 inline-block align-middle')} <b>${e(n.nombre)}</b> · ${e(n.servicio||n.categoria)} · ${n.activo?'✅ activo':'⏳ pendiente'} · ${n.abierto===false?'cerrado':'abierto'}<br>${n.lat!=null?'Ubicación fijada':'Sin ubicación'}`,n=>(n.foto?`<button onclick="quitFoto('negocios','${n.id}')" class="${CHIP}">🖼 Quitar foto</button>`:'')+`<button onclick="togNeg('${n.id}',${!n.activo})" class="${CHIP} ${n.activo?'':'!bg-v !text-vt font-black'}">${n.activo?'Desactivar':'✔ Aprobar'}</button>`);
+  if(asec==='Productos') b=await lista('productos',p=>`${p.foto?`<img src="${e(p.foto)}" class="w-12 h-12 rounded-xl object-cover inline-block mr-2 align-middle">`:''}<b>${e(p.nombre)}</b> · ${cup(p.precio)} · ${p.disponible?'disponible':'agotado'}${p.descripcion?'<br><i>'+e(p.descripcion)+'</i>':''}`,p=>p.foto?`<button onclick="quitFoto('productos','${p.id}')" class="${CHIP}">🖼 Quitar foto</button>`:'');
   if(asec==='Pedidos') b=chipsH([['activos','Activos'],['todos','Todos']],pf,'pf')+await lista('pedidos',p=>`${tag(p.estado)} <b>${e(p.cliente_nombre)}</b><br>${e(p.direccion)}<br>Total ${cup(p.total)} (envío ${cup(p.envio)})`,()=>'',p=>pf==='todos'||!FIN.includes(p.estado));
   if(asec==='Recargas') b=await lista('recargas',r=>`<b>${e(r.nombre)}</b> · ${e(r.telefono)}<br>Paquete ${cup(r.monto)} · ${r.estado}`,r=>r.estado==='pendiente'?`<button onclick="aprobar('${r.id}')" class="${CHIP} !bg-v !text-vt font-black">✔ Aprobar y acreditar</button>`:'');
   if(asec==='Soporte') b=await lista('soporte',s=>`<b>${e(s.nombre)}</b> (${s.rol}) · ${s.estado}<br>${e(s.mensaje)}${s.respuesta?`<br><i>Respuesta: ${e(s.respuesta)}</i>`:''}`,s=>`<button onclick="resp('${s.id}')" class="${CHIP}">Responder</button>`);
   if(asec==='Ajustes') b=`<form onsubmit="saveCfg(event)" class="${CARD} space-y-2">
     <label class="text-sm font-semibold">Tarifa por km (CUP)<input name="tarifa_km" type="number" value="${e(CFG.tarifa_km)}" class="${INP}"></label>
+    <label class="text-sm font-semibold">Paquetes de saldo prepago (separados por coma)<input name="paquetes" value="${e(CFG.paquetes||'250,500,1000')}" placeholder="250,500,1000" class="${INP}"></label>
     <label class="text-sm font-semibold">Envío mínimo (CUP)<input name="envio_min" type="number" value="${e(CFG.envio_min)}" class="${INP}"></label>
     <label class="text-sm font-semibold">Descuento por entrega al repartidor (CUP) · pon 0 para que repartan gratis<input name="comision" type="number" value="${e(CFG.comision)}" class="${INP}"></label>
     <label class="text-sm font-semibold">Tu número de tarjeta (para recargas)<input name="tarjeta" value="${e(CFG.tarjeta)}" class="${INP}"></label>
@@ -537,7 +543,7 @@ async function ed(t,id){
     const {error}=await sb.from(t).update(o).eq('id',id); if(error) return toast('Error: '+error.message); editing=false; toast('Guardado'); vAdmin();
   };
 }
-async function del(t,id){ if(!confirm('¿Eliminar definitivamente?')) return; const {error}=await sb.from(t).delete().eq('id',id); if(error) toast(error.message); vAdmin(); }
+async function del(t,id){ if(!confirm('¿Eliminar definitivamente?')) return; const fs=['productos','negocios','usuarios'].includes(t)?await fotosDe(t,id):[]; const {error}=await sb.from(t).delete().eq('id',id); if(error) toast(error.message); else for(const f of fs) await borrarFoto(f); vAdmin(); }
 async function ban(id,v){ if(await upd('usuarios',id,{baneado:v})){ toast(v?'Usuario baneado':'Usuario desbaneado'); vAdmin(); } }
 async function aprobarU(id){
   const {data:u}=await sb.from('usuarios').select('rol').eq('id',id).single();
@@ -545,6 +551,10 @@ async function aprobarU(id){
 }
 async function togNeg(id,v){ if(await upd('negocios',id,{activo:v})){ toast(v?'Negocio aprobado ✔':'Negocio desactivado'); vAdmin(); } }
 async function sal(id,m){ const {data:u}=await sb.from('usuarios').select('saldo').eq('id',id).single(); if(await upd('usuarios',id,{saldo:(u.saldo||0)+m})){ toast('+'+m+' CUP'); vAdmin(); } }
+async function borrarFoto(url){ try{ const m=String(url||'').match(/\/fotos\/([^?]+)$/); if(m) await sb.storage.from('fotos').remove([decodeURIComponent(m[1])]); }catch{} }
+async function fotosDe(t,id){ try{ if(t==='negocios'){ const a=(await sb.from('negocios').select('foto').eq('id',id).maybeSingle()).data, b=(await sb.from('productos').select('foto').eq('negocio_id',id)).data||[]; return [a?.foto,...b.map(x=>x.foto)].filter(Boolean); } const r=(await sb.from(t).select('foto').eq('id',id).maybeSingle()).data; return r?.foto?[r.foto]:[]; }catch{ return []; } }
+async function quitFoto(t,id){ if(!confirm('¿Quitar esta foto?')) return; const fs=await fotosDe(t,id); if(await upd(t,id,{foto:null})){ for(const f of fs) await borrarFoto(f); toast('Foto eliminada del almacén'); vAdmin(); } }
+async function fotoPerfil(inp){ const fl=inp.files[0]; if(!fl) return; try{ const old=U.foto, u=await subir(fl,300); if(await upd('usuarios',U.id,{foto:u})){ await borrarFoto(old); U.foto=u; toast('Foto de perfil guardada'); render(); } }catch{ toast('No se pudo subir la foto'); } }
 async function aprobar(id){
   const {data:r}=await sb.from('recargas').select('*').eq('id',id).single(); if(!r||r.estado!=='pendiente') return;
   const {data:u}=await sb.from('usuarios').select('saldo').eq('id',r.repartidor_id).single();
