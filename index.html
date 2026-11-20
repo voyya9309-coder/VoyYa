@@ -407,9 +407,12 @@ async function tomar(id,saldo){
 }
 async function entregar(id){
   const c=prompt('Pídele al cliente su código de 4 dígitos'); if(c===null) return;
-  const {data:ok,error}=await sb.rpc('confirmar_entrega',{p_pedido:id,p_repartidor:U.id,p_codigo:c.trim()});
+  const {data:r,error}=await sb.rpc('confirmar_entrega2',{p_pedido:id,p_repartidor:U.id,p_codigo:String(c).replace(/\D/g,'')});
   if(error) return toast('Falta ejecutar el SQL nuevo: '+error.message);
-  if(!ok) return toast('Código incorrecto');
+  if(r==='codigo') return toast('Código incorrecto: pídele al cliente el código que ve en su pantalla');
+  if(r==='estado') return toast('Este pedido no está en camino o ya fue entregado');
+  if(r==='repartidor') return toast('Este pedido está asignado a otro repartidor');
+  if(r!=='ok') return toast('No se pudo confirmar: '+r);
   stopGPS(); await sb.from('ubicaciones').delete().eq('repartidor_id',U.id); shownAct=null; toast('¡Entrega completada! ✅'); render();
 }
 function startGPS(me1,pid){ // watchPosition guarda la posición; cada 5 s se sube a Supabase
