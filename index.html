@@ -102,7 +102,7 @@ const draw = h => { app.innerHTML=h; lucide.createIcons(); };
 const toast = m => { const t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.add('hidden'),3000); };
 const skel = () => draw(`<div class="sk h-32 rounded-3xl mb-3"></div><div class="sk h-20 rounded-3xl mb-3"></div><div class="sk h-20 rounded-3xl"></div>`);
 const fail = er => draw(`<div class="${CARD} text-red-700">No se pudo conectar: ${e(er.message||er)}.<br>Revisa tu conexión y que hayas ejecutado schema.sql.</div>`);
-function unsub(){ chans.forEach(c=>sb.removeChannel(c)); chans=[]; if(M){ try{M.map.remove()}catch{} M=null; } }
+function unsub(){ chans.forEach(c=>sb.removeChannel(c)); chans=[]; if(M){ try{M.map.remove()}catch{} M=null; } cerrar3d(); }
 function listen(name,table,filter,fn){ const c={event:'*',schema:'public',table}; if(filter)c.filter=filter; chans.push(sb.channel(name+Math.random()).on('postgres_changes',c,fn).subscribe()); }
 const dist=(a,b,c,d)=>{const r=x=>x*Math.PI/180,h=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 12742*Math.asin(Math.sqrt(h))};
 const gps=ok=>{ if(!navigator.geolocation) return toast('Sin GPS en este teléfono'); let best=null,done=false,w;
@@ -222,18 +222,40 @@ async function render(){
 }
 
 /* ---------- Mapa (Leaflet + OpenStreetMap) ---------- */
-function mk(id){ const map=L2.map(id).setView([21.9322,-79.4428],12); L2.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map); return {map,m:{},n:0}; }
+function mk(id){ const map=L2.map(id).setView([21.9322,-79.4428],12); L2.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map); P3={}; RL=[]; TR=[]; cerrar3d(); const C=L2.control({position:'topright'}); C.onAdd=()=>{ const b=L2.DomUtil.create('button',''); b.textContent='🧊 3D'; b.style.cssText='background:#111;color:#fff;font-weight:800;padding:8px 12px;border-radius:12px;box-shadow:0 2px 8px #0006'; L2.DomEvent.disableClickPropagation(b); b.onclick=()=>toggle3d(id); return b; }; C.addTo(map); return {map,m:{},n:0}; }
 function pt(k,lat,lng,label,color){
-  if(!M||lat==null||lng==null) return;
+  if(!M||lat==null||lng==null) return; P3[k]=[lat,lng,color,label]; d3draw();
   if(M.m[k]) M.m[k].setLatLng([lat,lng]);
   else M.m[k]=L2.circleMarker([lat,lng],{radius:9,color:'#fff',weight:2,fillColor:color,fillOpacity:1}).addTo(M.map).bindTooltip(label,{permanent:true,direction:'top'});
   const g=Object.values(M.m).map(x=>x.getLatLng());
   if(g.length!==M.n){ M.n=g.length; g.length>1?M.map.fitBounds(L2.latLngBounds(g),{padding:[40,40]}):M.map.setView(g[0],15); }
 }
 
-let TR=[], _rt=0;
-function trail(la,ln){ if(!M) return; const l=TR[TR.length-1]; if(l&&l[0]===la&&l[1]===ln) return; TR.push([la,ln]); if(M.tl) M.tl.setLatLngs(TR); else M.tl=L2.polyline(TR,{color:'#dc2626',weight:5,opacity:.85}).addTo(M.map); }
-async function rutaLinea(a,b,c,d){ if(!M||Date.now()-_rt<15000) return; _rt=Date.now(); try{ const r=await fetch(`https://router.project-osrm.org/route/v1/driving/${b},${a};${d},${c}?overview=full&geometries=geojson`), j=await r.json(), g=(j.routes&&j.routes[0]?j.routes[0].geometry.coordinates:[]).map(x=>[x[1],x[0]]); if(g.length&&M){ if(M.rl) M.rl.setLatLngs(g); else M.rl=L2.polyline(g,{color:'#2563eb',weight:4,dashArray:'8 8'}).addTo(M.map); } }catch{} }
+let TR=[], _rt=0, RL=[], P3={}, MG=null, V3=false, ACT=null, PICK=false;
+function trail(la,ln){ if(!M) return; const l=TR[TR.length-1]; if(l&&l[0]===la&&l[1]===ln) return; TR.push([la,ln]); if(M.tl) M.tl.setLatLngs(TR); else M.tl=L2.polyline(TR,{color:'#dc2626',weight:5,opacity:.85}).addTo(M.map); d3draw(); }
+async function rutaLinea(w){ // w = [[lat,lng],...] pasando por cada punto
+  if(!M||Date.now()-_rt<15000) return; _rt=Date.now();
+  try{ const r=await fetch('https://router.project-osrm.org/route/v1/driving/'+w.map(x=>x[1]+','+x[0]).join(';')+'?overview=full&geometries=geojson'), j=await r.json();
+    RL=(j.routes&&j.routes[0]?j.routes[0].geometry.coordinates:[]).map(x=>[x[1],x[0]]);
+    if(RL.length&&M){ if(M.rl) M.rl.setLatLngs(RL); else M.rl=L2.polyline(RL,{color:'#2563eb',weight:4,dashArray:'8 8'}).addTo(M.map); d3draw(); } }catch{} }
+function rutaYo(){ if(!ACT||!lastPos) return; const w=[[lastPos.latitude,lastPos.longitude]]; if(!PICK&&ACT.negocios&&ACT.negocios.lat!=null) w.push([ACT.negocios.lat,ACT.negocios.lng]); if(ACT.lat!=null) w.push([ACT.lat,ACT.lng]); if(w.length>1){ _rt=0; rutaLinea(w); } }
+/* ---- Vista 3D (MapLibre, se carga solo al tocar el botón) ---- */
+function loadML(){ return new Promise((ok,no)=>{ if(window.maplibregl) return ok(); const l=document.createElement('link'); l.rel='stylesheet'; l.href='https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css'; document.head.appendChild(l); const sc=document.createElement('script'); sc.src='https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js'; sc.onload=ok; sc.onerror=no; document.head.appendChild(sc); }); }
+function cerrar3d(){ V3=false; if(MG){ try{MG.remove()}catch{} MG=null; } document.querySelectorAll('#m3,.b3').forEach(x=>x.remove()); }
+async function toggle3d(id){ const box=document.getElementById(id); if(!box) return; if(V3) return cerrar3d(); toast('Cargando mapa 3D…');
+  try{ await loadML(); }catch{ return toast('No se pudo cargar el 3D (revisa internet)'); }
+  V3=true; const d=document.createElement('div'); d.id='m3'; d.style.cssText='position:absolute;inset:0;z-index:1000'; box.appendChild(d);
+  const b=document.createElement('button'); b.className='b3'; b.textContent='🗺 Volver a 2D'; b.style.cssText='position:absolute;top:10px;right:10px;z-index:1001;background:#111;color:#fff;font-weight:800;padding:8px 12px;border-radius:12px;box-shadow:0 2px 8px #0006'; b.onclick=cerrar3d; box.appendChild(b);
+  const r=P3.rep||P3.yo||P3.cli||P3.neg||[21.9322,-79.4428];
+  MG=new maplibregl.Map({container:d,style:'https://tiles.openfreemap.org/styles/liberty',center:[r[1],r[0]],zoom:16.5,pitch:60,bearing:0,attributionControl:{compact:true}}); MG._mk={};
+  MG.on('load',()=>{ const ls=()=>({type:'FeatureCollection',features:[]});
+    MG.addSource('route',{type:'geojson',data:ls()}); MG.addSource('trail',{type:'geojson',data:ls()});
+    MG.addLayer({id:'route',type:'line',source:'route',paint:{'line-color':'#2563eb','line-width':6,'line-opacity':.85}});
+    MG.addLayer({id:'trail',type:'line',source:'trail',paint:{'line-color':'#dc2626','line-width':6}}); MG._ok=true; d3draw(); }); }
+function d3draw(){ if(!MG||!MG._ok) return; const ls=a=>({type:'FeatureCollection',features:a.length>1?[{type:'Feature',geometry:{type:'LineString',coordinates:a.map(x=>[x[1],x[0]])}}]:[]});
+  for(const k in P3){ const [la,ln,co,lb]=P3[k]; if(MG._mk[k]) MG._mk[k].setLngLat([ln,la]); else { const el=document.createElement('div'); el.style.cssText='width:22px;height:22px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px #0008;background:'+co; MG._mk[k]=new maplibregl.Marker({element:el}).setLngLat([ln,la]).setPopup(new maplibregl.Popup({offset:14}).setText(lb)).addTo(MG); } }
+  MG.getSource('trail').setData(ls(TR)); MG.getSource('route').setData(ls(RL));
+  const r=P3.rep||P3.yo||P3.cli; if(r){ const l=TR[TR.length-2], c=TR[TR.length-1]; let br=MG.getBearing(); if(l&&c){ const dy=c[0]-l[0], dx=(c[1]-l[1])*Math.cos(c[0]*Math.PI/180); if(Math.abs(dx)+Math.abs(dy)>1e-6) br=Math.atan2(dx,dy)*180/Math.PI; } MG.easeTo({center:[r[1],r[0]],bearing:br,pitch:60,zoom:17,duration:1200}); } }
 /* =================== CLIENTE =================== */
 async function vCliente(){
   if(!U) return auth('cliente',render);
@@ -336,7 +358,7 @@ async function track(id){
     pt('cli',p.lat,p.lng,'Tú','#2563eb'); pt('neg',p.negocios?.lat,p.negocios?.lng,p.negocios?.nombre||'Negocio','#f59e0b');
     if(p.repartidor_id&&p.estado==='en_camino'){
       if(locRep!==p.repartidor_id){ locRep=p.repartidor_id; listen('loc','ubicaciones',`repartidor_id=eq.${p.repartidor_id}`,load); }
-      const {data:u}=await sb.from('ubicaciones').select('*').eq('repartidor_id',p.repartidor_id).maybeSingle(); if(u){ pt('rep',u.lat,u.lng,'Repartidor','#dc2626'); trail(u.lat,u.lng); if(p.lat!=null) rutaLinea(u.lat,u.lng,p.lat,p.lng); }
+      const {data:u}=await sb.from('ubicaciones').select('*').eq('repartidor_id',p.repartidor_id).maybeSingle(); if(u){ pt('rep',u.lat,u.lng,'Repartidor','#dc2626'); trail(u.lat,u.lng); if(p.lat!=null) rutaLinea([[u.lat,u.lng],[p.lat,p.lng]]); }
     }
   };
   listen('ped','pedidos',`id=eq.${id}`,load); load();
@@ -415,10 +437,10 @@ async function vRepartidor(){
       <p class="text-xs text-slate-500 mb-3">Cada entrega descuenta ${cup(com)} · Hoy: ${(hist||[]).length} entregas, ${cup(gan)} en envíos</p>
       <div class="text-xs font-bold mb-1">Comprar paquete</div><div class="flex gap-2">${String(CFG.paquetes||'250,500,1000').split(',').map(Number).filter(Boolean).map(m=>`<button onclick="comprar(${m})" class="${CHIP} flex-1 !py-2.5 font-black">${m}</button>`).join('')}</div><div id="pk"></div></div>`;
     if(act){
-      shownAct=act.id;
+      shownAct=act.id; ACT=act; PICK=false;
       draw(top+`<div class="${CARD}"><b class="text-lg">🛵 Entrega en curso</b><p class="text-sm text-slate-500 mb-2">GPS activo: se comparte tu ubicación cada 5 s.</p><p><b>Recoge:</b> ${e(act.negocios?.nombre)}</p><p><b>Entrega a:</b> ${e(act.cliente_nombre)} · ${e(act.cliente_tel)}</p><p><b>Dirección:</b> ${e(act.direccion)}</p>${act.nota?`<p><b>Nota:</b> ${e(act.nota)}</p>`:''}
-      <p class="font-black text-lg my-2">${act.metodo_pago==='transferencia'?`Cobrar solo el servicio ${cup(act.envio)} (productos ya pagados)`:`Cobrar ${cup(act.total)}${act.paga_con?` · paga con ${cup(act.paga_con)}, vuelto ${cup(act.paga_con-act.total)}`:''}`}</p><div id="map" class="h-60 rounded-2xl border mb-3 overflow-hidden"></div><button onclick="entregar('${act.id}')" class="${BTN} w-full">Marcar entregado</button></div>`);
-      if(M){ try{M.map.remove()}catch{} M=null; } M=mk('map'); pt('cli',act.lat,act.lng,'Cliente','#2563eb'); pt('neg',act.negocios?.lat,act.negocios?.lng,'Negocio','#f59e0b'); startGPS(me1,act.id);
+      <p class="font-black text-lg my-2">${act.metodo_pago==='transferencia'?`Cobrar solo el servicio ${cup(act.envio)} (productos ya pagados)`:`Cobrar ${cup(act.total)}${act.paga_con?` · paga con ${cup(act.paga_con)}, vuelto ${cup(act.paga_con-act.total)}`:''}`}</p><div id="map" class="h-[55vh] rounded-2xl border mb-3 overflow-hidden"></div><p class="text-xs text-slate-500 mb-2">🔴 tu recorrido · 🔵 ruta (negocio → cliente) · botón 🧊 3D arriba del mapa</p><button onclick="PICK=true;rutaYo();toast('Ruta directa al cliente')" class="${CHIP} w-full mb-2">📦 Ya recogí el pedido</button><button onclick="entregar('${act.id}')" class="${BTN} w-full">Marcar entregado</button></div>`);
+      if(M){ try{M.map.remove()}catch{} M=null; } M=mk('map'); M.map.addControl(L2.control.scale({imperial:false})); pt('cli',act.lat,act.lng,'Cliente','#2563eb'); pt('neg',act.negocios?.lat,act.negocios?.lng,'Negocio','#f59e0b'); startGPS(me1,act.id);
     } else {
       shownAct=null; stopGPS(); if(M){ try{M.map.remove()}catch{} M=null; }
       const {data}=await sb.from('pedidos').select('*, negocios(nombre)').eq('estado','listo').is('repartidor_id',null).order('creado');
@@ -455,10 +477,10 @@ async function entregar(id){
 function startGPS(me1,pid){ // watchPosition guarda la posición; cada 5 s se sube a Supabase
   if(watchId!==null) return; if(!navigator.geolocation) return toast('Sin GPS en este teléfono');
   watchId=navigator.geolocation.watchPosition(p=>{lastPos=p.coords},()=>toast('Activa el permiso de ubicación'),{enableHighAccuracy:true,maximumAge:5000});
-  gpsTimer=setInterval(()=>{ if(!lastPos) return; pt('yo',lastPos.latitude,lastPos.longitude,'Tú','#dc2626');
+  gpsTimer=setInterval(()=>{ if(!lastPos) return; pt('yo',lastPos.latitude,lastPos.longitude,'Tú','#dc2626'); trail(lastPos.latitude,lastPos.longitude); rutaYo();
     sb.from('ubicaciones').upsert({repartidor_id:me1,pedido_id:pid,lat:lastPos.latitude,lng:lastPos.longitude,actualizado:new Date().toISOString()}).then(()=>{}); },5000);
 }
-function stopGPS(){ if(watchId!==null) navigator.geolocation.clearWatch(watchId); clearInterval(gpsTimer); watchId=null; gpsTimer=null; lastPos=null; }
+function stopGPS(){ ACT=null; if(watchId!==null) navigator.geolocation.clearWatch(watchId); clearInterval(gpsTimer); watchId=null; gpsTimer=null; lastPos=null; }
 
 /* =================== SOPORTE =================== */
 async function vSoporte(){
