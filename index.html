@@ -112,7 +112,15 @@ const _rk={}; async function rutaKm(a,b,c,d){ const k=[a,b,c,d].map(x=>x.toFixed
   return _rk[k]=dist(a,b,c,d)*1.3; }
 function nImg(n,cls){ return n.foto?`<img src="${e(n.foto)}" loading="lazy" class="${cls} rounded-2xl object-cover">`:`<span class="${cls} rounded-2xl bg-s flex items-center justify-center text-3xl">${e(n.emoji)}</span>`; }
 function ding(){ try{ navigator.vibrate&&navigator.vibrate([200,100,200]); const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain(); o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.setValueAtTime(.25,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.6);o.start();o.stop(a.currentTime+.6); }catch{} }
-function voz(t){ try{ ding(); const u=new SpeechSynthesisUtterance(t); u.lang='es-ES'; speechSynthesis.cancel(); speechSynthesis.speak(u); if(window.Notification&&Notification.permission==='granted'&&document.hidden) new Notification('VoyYa',{body:t}); }catch{} }
+// APK de negocio: NUNCA lee en voz alta. El aviso de pedido lo hace la notificación nativa con tu audio.
+const NEG=(()=>{ try{ return !!(window.Android&&Android.esNegocio&&Android.esNegocio()); }catch{ return false; } })();
+function sonarPedido(){ try{ navigator.vibrate&&navigator.vibrate([300,150,300]); const a=new Audio('nuevo_pedido.mp3'); const p=a.play(); p&&p.catch&&p.catch(()=>{}); }catch{} }
+function voz(t){ if(NEG){ try{ if(!Android.notifActivas()) sonarPedido(); }catch{} return; }
+  try{ ding(); const u=new SpeechSynthesisUtterance(t); u.lang='es-ES'; speechSynthesis.cancel(); speechSynthesis.speak(u); if(window.Notification&&Notification.permission==='granted'&&document.hidden) new Notification('VoyYa',{body:t}); }catch{} }
+// Avisa a la APK quién tiene la sesión abierta para que reciba los pedidos aunque la app esté cerrada
+let _vySes='';
+function puenteSesion(){ try{ if(!NEG) return; const k=U?U.id+'|'+U.rol:''; if(k===_vySes) return; _vySes=k; Android.setSesion(U?U.id:'',U?U.rol:''); }catch{} }
+setInterval(puenteSesion,3000);
 let APKS=[],ENL=[],AVS=[];
 const REC=()=>{ try{ return JSON.parse(localStorage.voyya_rec||'{}'); }catch{ return {}; } };
 const ckGet=()=>{ const m=document.cookie.match(/voyya_u=([\w-]+)/); return m?m[1]:null; };
@@ -239,7 +247,7 @@ async function hb(){ // latido: marca "conectado", registra el teléfono y cierr
   if(data&&(data.baneado||data.aprobado===false)){ if(data.baneado) BAN={...U,...data}; localStorage.removeItem('voyya_u'); U=null; toast('Tu sesión terminó'); render(); return; }
   const r=await listaNegra(); if(r){ BAN={...U,...r}; render(); }
 }
-function salir(){ localStorage.removeItem('voyya_u'); document.cookie='voyya_u=;max-age=0;path=/'; stopGPS(); U=null; go('cliente'); }
+function salir(){ localStorage.removeItem('voyya_u'); document.cookie='voyya_u=;max-age=0;path=/'; stopGPS(); U=null; puenteSesion(); go('cliente'); }
 function head(){
   document.getElementById('hr').innerHTML=(U?`<label class="flex items-center gap-2 text-xs text-white/70 cursor-pointer">${U.foto?`<img src="${e(U.foto)}" class="w-8 h-8 rounded-full object-cover"> ${e(U.nombre)}`:`<span class="flex flex-col items-center leading-none"><span class="w-8 h-8 rounded-full bg-white"></span><span class="text-[9px] mt-0.5 whitespace-nowrap">Subir foto de perfil</span></span> ${e(U.nombre)}`}<input type="file" accept="image/*" class="hidden" onchange="fotoPerfil(this)"></label><button onclick="salir()" class="text-xs underline text-white/70">Salir</button>`:'')+`<button onclick="U?go('soporte'):toast('Inicia sesión para escribir a soporte')" class="p-2 text-white" aria-label="Soporte">${ico('soporte','w-5 h-5')}</button>`;
   lucide.createIcons();
@@ -504,15 +512,31 @@ async function delProd(id){ if(!confirm('¿Borrar este producto?')) return; cons
 async function fotoNeg(id,inp){ const fl=inp.files[0]; if(!fl) return; try{ const old=(await fotosDe('negocios',id))[0], u=await subir(fl,600); if(await upd('negocios',id,{foto:u})){ await borrarFoto(old); toast('Foto actualizada'); render(); } }catch{ toast('No se pudo subir la foto'); } }
 async function servNeg(id){ const v=prompt('Tipo de servicio (opcional). Ej: Comida a domicilio'); if(v===null) return; if(await upd('negocios',id,{servicio:v.trim()||null})){ toast('Guardado'); render(); } }
 function setLoc(id){ gps(async c=>{ if(await upd('negocios',id,{lat:c.latitude,lng:c.longitude})){ toast('Ubicación guardada'); render(); } }); }
-async function subir(file,max=700,keep=false){ // el admin puede bloquear; comprime al máximo (WebP/JPEG, objetivo ≈60 KB)
+async function subir(file,max=700,keep=false){ // comprime al máximo sin pérdida visible: tamaño justo para la pantalla + la calidad WebP más baja que aún se ve nítida
   if(CFG.fotos==='no'&&!ADM&&!PRIN){ toast('🚫 El administrador no permite subir fotos por ahora'); throw new Error('fotos bloqueadas'); }
-  const png=keep&&file.type==='image/png', img=await createImageBitmap(file), s=Math.min(1,Math.min(max,800)/Math.max(img.width,img.height)), c=document.createElement('canvas');
-  c.width=Math.round(img.width*s); c.height=Math.round(img.height*s); c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-  let b,ty=png?'image/png':'image/webp',q=.8; const tb=(t,qq)=>new Promise(r=>c.toBlob(r,t,qq));
-  b=await tb(ty,q); if(!png&&b.type!=='image/webp'){ ty='image/jpeg'; b=await tb(ty,q); }
-  while(!png&&b.size>60000&&q>.45){ q-=.1; b=await tb(ty,q); }
+  const png=keep&&file.type==='image/png';
+  let img; try{ img=await createImageBitmap(file,{imageOrientation:'from-image'}); }catch{ img=await createImageBitmap(file); }
+  const lado=Math.min(max,1080), s=Math.min(1,lado/Math.max(img.width,img.height));
+  let w=Math.max(1,Math.round(img.width*s)), h=Math.max(1,Math.round(img.height*s));
+  const presupuesto=Math.max(12000,Math.min(90000,Math.round(w*h*.11))); // bytes objetivo según el tamaño en pantalla
+  const tb=(c,t,q)=>new Promise(r=>c.toBlob(r,t,q));
+  const dibujar=(ww,hh)=>{ const c=document.createElement('canvas'); c.width=ww; c.height=hh; const x=c.getContext('2d'); x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high'; x.drawImage(img,0,0,ww,hh); return c; };
+  let ty=png?'image/png':'image/webp', best=null;
+  for(let k=0;k<5;k++){
+    const c=dibujar(w,h);
+    if(png){ best=await tb(c,'image/png'); break; }
+    let hi=.82, lo=.55, b=await tb(c,ty,hi);
+    if(b.type!==ty){ ty='image/jpeg'; b=await tb(c,ty,hi); }
+    if(b.size<=presupuesto){ best=b; break; }            // ya cabe con calidad alta
+    const bl=await tb(c,ty,lo); best=bl;
+    if(bl.size>presupuesto){ w=Math.round(w*.85); h=Math.round(h*.85); if(Math.min(w,h)<320) break; continue; } // ni con la calidad mínima: se reduce el tamaño
+    for(let i=0;i<5;i++){ const m=(lo+hi)/2, bm=await tb(c,ty,m); if(bm.size<=presupuesto){ best=bm; lo=m; } else hi=m; } // mejor calidad que aún cabe
+    break;
+  }
+  try{ img.close&&img.close(); }catch{}
+  if(png&&best&&file.size<best.size) best=file; // nunca subir algo más pesado que el original
   const ex=ty==='image/png'?'png':ty==='image/webp'?'webp':'jpg', n=`${Date.now()}_${Math.random().toString(36).slice(2)}.${ex}`;
-  const {error}=await sb.storage.from('fotos').upload(n,b,{contentType:ty}); if(error) throw error;
+  const {error}=await sb.storage.from('fotos').upload(n,best,{contentType:best.type||ty,cacheControl:'31536000'}); if(error) throw error;
   return sb.storage.from('fotos').getPublicUrl(n).data.publicUrl;
 }
 async function subirRaw(file){ const x=(file.name.split('.').pop()||'bin').toLowerCase(), n=`${Date.now()}_${Math.random().toString(36).slice(2)}.${x}`; const {error}=await sb.storage.from('fotos').upload(n,file,{contentType:file.type}); if(error) throw error; return sb.storage.from('fotos').getPublicUrl(n).data.publicUrl; }
